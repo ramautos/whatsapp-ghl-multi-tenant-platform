@@ -5,7 +5,15 @@ const path = require('path');
 
 class SQLiteDatabaseService {
     constructor() {
-        const dbPath = path.join(__dirname, '..', 'database', 'whatsapp_ghl_platform.db');
+        // Ensure database directory exists
+        const fs = require('fs');
+        const dbDir = path.join(__dirname, '..', 'database');
+        if (!fs.existsSync(dbDir)) {
+            fs.mkdirSync(dbDir, { recursive: true });
+            console.log('📁 Created database directory');
+        }
+        
+        const dbPath = path.join(dbDir, 'whatsapp_ghl_platform.db');
         this.db = new sqlite3.Database(dbPath);
         this.connected = false;
         this.initializeSchema();
