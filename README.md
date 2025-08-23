@@ -2,6 +2,10 @@
 
 > **Superior Alternative to Wazzap.mx** - Complete multi-tenant WhatsApp integration with GoHighLevel
 
+## 🎯 **PROJECT STATUS**
+✅ **PRODUCTION READY** - Deployed at https://whatsapp.cloude.es  
+🔄 **AUTO-DEPLOYMENT ACTIVE** - GitHub → Coolify sync enabled
+
 ## 🎯 **PROJECT OVERVIEW**
 
 This platform provides a **complete marketplace solution** for GoHighLevel agencies to offer WhatsApp Business integration to their clients. Each client gets **5 dedicated WhatsApp instances** with automatic setup and management.
