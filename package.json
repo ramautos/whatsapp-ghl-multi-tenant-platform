@@ -1,17 +1,14 @@
 {
-  "name": "evolution-ghl-intelligent-integration",
+  "name": "whatsapp-ghl-multi-tenant-platform",
   "version": "1.0.0",
-  "description": "Integración inteligente WhatsApp-GoHighLevel via Evolution API",
-  "main": "server.js",
+  "description": "Multi-Tenant WhatsApp-GoHighLevel Integration Platform",
+  "main": "server-multitenant.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
+    "start": "node server-multitenant.js",
+    "dev": "nodemon server-multitenant.js",
+    "test": "node test-webhook-evolution.js",
     "setup": "node setup-config.js",
-    "migrate": "node scripts/run-migrations.js",
-    "docker:build": "docker build -t evolution-ghl .",
-    "docker:run": "docker run -p 3000:3000 evolution-ghl",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down"
+    "migrate": "node scripts/run-migrations.js"
   },
   "dependencies": {
     "axios": "^1.6.0",
