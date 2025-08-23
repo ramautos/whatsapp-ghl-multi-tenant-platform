@@ -284,8 +284,8 @@ class EvolutionService extends EventEmitter {
         const result = await this.createInstance(instanceName);
         
         if (result.instance) {
-          // Configurar webhook para cada instancia
-          const webhookUrl = `${process.env.APP_URL}/api/webhook/messages?location=${locationId}&instance=${i}`;
+          // Configurar webhook para N8N (mantener flujo existente del usuario)
+          const webhookUrl = `https://ray.cloude.es/webhook/evolution1?location=${locationId}&instance=${i}`;
           
           // Configurar webhook
           try {
