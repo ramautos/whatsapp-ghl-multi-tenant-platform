@@ -69,9 +69,9 @@ app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard-multitenant.html'));
 });
 
-// Dashboard específico por cliente (locationId)
+// Dashboard específico por cliente (locationId) - Simple y directo
 app.get('/dashboard/:locationId', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'dashboard-multitenant.html'));
+    res.sendFile(path.join(__dirname, 'public', 'simple-dashboard.html'));
 });
 
 // Página de registro para nuevos clientes

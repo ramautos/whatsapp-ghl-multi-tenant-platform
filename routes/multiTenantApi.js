@@ -189,6 +189,40 @@ router.post('/instances/:locationId/activate', async (req, res) => {
     }
 });
 
+// Conectar instancia específica (nueva ruta simple)
+router.post('/instances/:locationId/:position/connect', async (req, res) => {
+    try {
+        const { locationId, position } = req.params;
+        const instanceName = `${locationId}_${position}`;
+        
+        console.log(`🔗 Connecting instance ${instanceName} for position ${position}`);
+        
+        // Get QR code from Evolution API
+        const evolutionService = require('../services/evolutionService');
+        const qrCode = await evolutionService.connectInstance(instanceName);
+        
+        if (qrCode) {
+            res.json({
+                success: true,
+                qrCode: qrCode,
+                instanceName: instanceName,
+                message: 'QR code generated successfully'
+            });
+        } else {
+            res.json({
+                success: false,
+                error: 'Could not generate QR code'
+            });
+        }
+    } catch (error) {
+        console.error(`Error connecting instance:`, error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message 
+        });
+    }
+});
+
 // Desconectar instancia
 router.post('/instances/:locationId/disconnect', async (req, res) => {
     try {

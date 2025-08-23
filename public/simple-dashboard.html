@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp-GHL SMS Manager</title>
+    <title>WhatsApp Business Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -12,568 +12,280 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            width: 100%;
-            max-width: 600px;
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .company-name {
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .company-name img {
-            width: 40px;
-            height: 40px;
-        }
-
-        .location-id {
-            font-size: 12px;
-            opacity: 0.8;
-            font-family: monospace;
-        }
-
-        .main-content {
-            padding: 40px;
-        }
-
-        .instance-card {
-            background: #f8f9fa;
-            border: 3px solid #e9ecef;
-            border-radius: 15px;
-            padding: 30px;
-            text-align: center;
-            transition: all 0.3s ease;
-            margin-bottom: 30px;
-        }
-
-        .instance-card.connected {
-            background: #e8f5e9;
-            border-color: #4caf50;
-            box-shadow: 0 5px 25px rgba(76, 175, 80, 0.2);
-        }
-
-        .instance-card.qr-pending {
-            background: #fff3e0;
-            border-color: #ff9800;
-            box-shadow: 0 5px 25px rgba(255, 152, 0, 0.2);
-            animation: pulse-orange 2s infinite;
-        }
-
-        @keyframes pulse-orange {
-            0%, 100% { box-shadow: 0 5px 25px rgba(255, 152, 0, 0.2); }
-            50% { box-shadow: 0 5px 35px rgba(255, 152, 0, 0.4); }
-        }
-
-        .instance-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f5f7fa;
             color: #333;
         }
 
-        .instance-id {
-            font-family: 'Courier New', monospace;
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 20px;
-            padding: 10px;
-            background: rgba(0,0,0,0.05);
-            border-radius: 8px;
-        }
-
-        .status-display {
-            margin: 25px 0;
-        }
-
-        .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 15px 25px;
-            border-radius: 25px;
-            font-weight: 600;
-            font-size: 16px;
-        }
-
-        .status-indicator.inactive {
-            background: #f5f5f5;
-            color: #666;
-        }
-
-        .status-indicator.qr-pending {
-            background: #fff3e0;
-            color: #ff9800;
-        }
-
-        .status-indicator.connected {
-            background: #e8f5e9;
-            color: #4caf50;
-        }
-
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: currentColor;
-        }
-
-        .status-dot.connected {
-            animation: pulse-green 2s infinite;
-        }
-
-        @keyframes pulse-green {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .phone-display {
-            font-family: 'Courier New', monospace;
-            color: #4caf50;
-            font-size: 20px;
-            font-weight: bold;
-            margin: 15px 0;
-        }
-
-        .action-button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .header {
+            background: #25d366;
             color: white;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 10px;
-            font-size: 16px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 10px;
         }
 
-        .action-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .action-button.disconnect {
-            background: #dc3545;
-        }
-
-        .action-button.disconnect:hover {
-            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
-        }
-
-        .action-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .qr-container {
-            margin: 25px 0;
-            padding: 20px;
+        .location-info {
             background: white;
-            border-radius: 12px;
-            border: 2px dashed #ccc;
-        }
-
-        .qr-code {
-            width: 256px;
-            height: 256px;
-            margin: 0 auto;
-            display: block;
-        }
-
-        .qr-instructions {
-            color: #666;
-            font-size: 14px;
-            margin-top: 15px;
-            line-height: 1.5;
-        }
-
-        .stats-bar {
-            background: #f8f9fa;
+            margin: 20px;
             padding: 20px;
-            display: flex;
-            justify-content: space-around;
-            border-top: 1px solid #e9ecef;
-        }
-
-        .stat-item {
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             text-align: center;
         }
 
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #667eea;
+        .instances-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px;
         }
 
-        .stat-label {
+        .instance-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .instance-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .instance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .instance-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 20px;
             font-size: 12px;
-            color: #6c757d;
-            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .status-connecting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-connected {
+            background: #d1edff;
+            color: #0c5460;
+        }
+
+        .status-disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .qr-container {
+            margin: 15px 0;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+        }
+
+        .qr-code {
+            max-width: 180px;
+            border-radius: 8px;
+        }
+
+        .qr-placeholder {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .action-button {
+            background: #25d366;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        .action-button:hover {
+            background: #20b358;
+        }
+
+        .action-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .disconnect-button {
+            background: #dc3545;
+            margin-top: 10px;
+        }
+
+        .disconnect-button:hover {
+            background: #c82333;
         }
 
         .loading {
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 2px solid rgba(255,255,255,.3);
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #25d366;
             border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
+            animation: spin 1s linear infinite;
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        /* Modal QR */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-        }
-
-        .modal-close {
-            background: #dc3545;
-            color: white;
-            padding: 10px 20px;
-            border: none;
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
             border-radius: 8px;
-            cursor: pointer;
-            margin-top: 20px;
+            margin: 20px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="company-name">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="white">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.149-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                </svg>
-                <span id="company-name">WhatsApp-GHL SMS</span>
-            </div>
-            <div class="location-id" id="location-id">Location ID: loading...</div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Single WhatsApp Instance -->
-            <div class="instance-card" id="main-instance">
-                <h2 class="instance-title">WhatsApp Business</h2>
-                <div class="instance-id" id="instance-id">Instancia: loading...</div>
-                
-                <div class="status-display">
-                    <div class="status-indicator inactive" id="status-indicator">
-                        <div class="status-dot" id="status-dot"></div>
-                        <span id="status-text">No Conectado</span>
-                    </div>
-                </div>
-
-                <div id="phone-display" class="phone-display" style="display: none;">
-                    <!-- Número aparece cuando está conectado -->
-                </div>
-
-                <div id="qr-display" style="display: none;">
-                    <!-- QR aparece aquí cuando está pendiente -->
-                </div>
-
-                <div class="action-buttons" id="action-buttons">
-                    <button class="action-button" onclick="connectWhatsApp()" id="connect-btn">
-                        📱 Conectar WhatsApp
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Stats Bar -->
-        <div class="stats-bar">
-            <div class="stat-item">
-                <div class="stat-value" id="messages-received">0</div>
-                <div class="stat-label">Mensajes Recibidos</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="messages-sent">0</div>
-                <div class="stat-label">Mensajes Enviados</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="contacts-created">0</div>
-                <div class="stat-label">Contactos Nuevos</div>
-            </div>
-        </div>
+    <div class="header">
+        <h1>📱 WhatsApp Business Dashboard</h1>
     </div>
 
-    <!-- Modal QR Grande -->
-    <div id="qr-modal" class="modal">
-        <div class="modal-content">
-            <h3>📱 Conectar WhatsApp</h3>
-            <div class="qr-container">
-                <img id="qr-code-large" class="qr-code" src="" alt="QR Code">
-            </div>
-            <p class="qr-instructions">
-                1. Abre WhatsApp en tu teléfono<br>
-                2. Ve a Configuración → Dispositivos vinculados<br>
-                3. Toca "Vincular dispositivo"<br>
-                4. Escanea este código QR
-            </p>
-            <button class="modal-close" onclick="closeQRModal()">Cerrar</button>
-        </div>
+    <div class="location-info">
+        <h2 id="locationId">Cargando...</h2>
+        <p>Conecta tus números de WhatsApp a GoHighLevel</p>
     </div>
+
+    <div id="errorContainer"></div>
+    <div id="instancesContainer" class="instances-grid"></div>
 
     <script>
-        // Configuración
-        const locationId = localStorage.getItem('location_id') || 'TEST123';
-        let currentInstance = null;
-        let socket;
+        // Get location ID from URL
+        const pathParts = window.location.pathname.split('/');
+        const locationId = pathParts[pathParts.length - 1];
+        
+        document.getElementById('locationId').textContent = `Location: ${locationId}`;
 
-        // Inicializar
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeDashboard();
-            loadInstance();
-            loadStatistics();
-            connectWebSocket();
-            
-            // Actualizar cada 30 segundos
-            setInterval(loadInstance, 30000);
-            setInterval(loadStatistics, 30000);
-        });
-
-        function initializeDashboard() {
-            const companyName = localStorage.getItem('company_name') || 'Mi Empresa';
-            document.getElementById('company-name').textContent = companyName;
-            document.getElementById('location-id').textContent = `Location ID: ${locationId}`;
-            document.getElementById('instance-id').textContent = `Instancia: ${locationId}`;
-        }
-
-        async function loadInstance() {
+        // Load instances
+        async function loadInstances() {
             try {
                 const response = await fetch(`/api/instances/${locationId}`);
                 const data = await response.json();
-                
-                if (data.success && data.instances.length > 0) {
-                    currentInstance = data.instances[0]; // Solo una instancia
-                    updateInstanceDisplay();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Error loading instances');
                 }
+
+                renderInstances(data.instances);
             } catch (error) {
-                console.error('Error loading instance:', error);
+                showError(`Error: ${error.message}`);
             }
         }
 
-        function updateInstanceDisplay() {
-            if (!currentInstance) return;
-
-            const statusIndicator = document.getElementById('status-indicator');
-            const statusDot = document.getElementById('status-dot');
-            const statusText = document.getElementById('status-text');
-            const phoneDisplay = document.getElementById('phone-display');
-            const qrDisplay = document.getElementById('qr-display');
-            const connectBtn = document.getElementById('connect-btn');
-            const instanceCard = document.getElementById('main-instance');
-
-            // Limpiar clases
-            instanceCard.className = 'instance-card';
-            statusIndicator.className = 'status-indicator';
-            statusDot.className = 'status-dot';
-
-            switch (currentInstance.status) {
-                case 'connected':
-                    instanceCard.classList.add('connected');
-                    statusIndicator.classList.add('connected');
-                    statusDot.classList.add('connected');
-                    statusText.textContent = 'Conectado';
-                    phoneDisplay.textContent = currentInstance.phone_number || 'WhatsApp Conectado';
-                    phoneDisplay.style.display = 'block';
-                    qrDisplay.style.display = 'none';
-                    connectBtn.textContent = '❌ Desconectar';
-                    connectBtn.onclick = disconnectWhatsApp;
-                    connectBtn.classList.add('disconnect');
-                    break;
-
-                case 'qr_pending':
-                    instanceCard.classList.add('qr-pending');
-                    statusIndicator.classList.add('qr-pending');
-                    statusText.textContent = 'Esperando escaneo...';
-                    phoneDisplay.style.display = 'none';
-                    if (currentInstance.qr_code) {
-                        showQRInline(currentInstance.qr_code);
-                    }
-                    connectBtn.textContent = '📱 Ver QR Grande';
-                    connectBtn.onclick = () => showQRModal(currentInstance.qr_code);
-                    connectBtn.classList.remove('disconnect');
-                    break;
-
-                default: // inactive
-                    statusIndicator.classList.add('inactive');
-                    statusText.textContent = 'No Conectado';
-                    phoneDisplay.style.display = 'none';
-                    qrDisplay.style.display = 'none';
-                    connectBtn.textContent = '📱 Conectar WhatsApp';
-                    connectBtn.onclick = connectWhatsApp;
-                    connectBtn.classList.remove('disconnect');
+        function renderInstances(instances) {
+            const container = document.getElementById('instancesContainer');
+            
+            if (!instances || instances.length === 0) {
+                container.innerHTML = `
+                    <div class="error">
+                        <h3>No hay instancias configuradas</h3>
+                        <p>Las instancias se crean automáticamente al instalar la app desde GoHighLevel</p>
+                    </div>
+                `;
+                return;
             }
-        }
 
-        function showQRInline(qrCode) {
-            const qrDisplay = document.getElementById('qr-display');
-            qrDisplay.innerHTML = `
-                <div class="qr-container">
-                    <img src="${qrCode}" alt="QR Code" style="width: 200px; height: 200px;">
-                    <p class="qr-instructions">Escanea con WhatsApp</p>
+            container.innerHTML = instances.map((instance, index) => `
+                <div class="instance-card">
+                    <div class="instance-header">
+                        <div class="instance-name">WhatsApp ${index + 1}</div>
+                        <div class="status-badge status-${instance.status || 'disconnected'}">
+                            ${getStatusText(instance.status)}
+                        </div>
+                    </div>
+                    
+                    <div class="qr-container" id="qr-${instance.id || index}">
+                        ${instance.qr_code ? 
+                            `<img src="${instance.qr_code}" alt="QR Code" class="qr-code">` :
+                            `<div class="qr-placeholder">Haz clic en "Conectar" para generar QR</div>`
+                        }
+                    </div>
+                    
+                    <button class="action-button" onclick="connectInstance('${instance.instance_name || instance.instanceName}', ${index})">
+                        <span id="btn-${index}">🔗 Conectar WhatsApp</span>
+                    </button>
                 </div>
-            `;
-            qrDisplay.style.display = 'block';
+            `).join('');
         }
 
-        async function connectWhatsApp() {
+        function getStatusText(status) {
+            switch(status) {
+                case 'connected': return '🟢 Conectado';
+                case 'connecting': return '🟡 Conectando';
+                case 'open': return '🟢 Activo';
+                default: return '🔴 Desconectado';
+            }
+        }
+
+        async function connectInstance(instanceName, index) {
+            const btn = document.getElementById(`btn-${index}`);
+            const qrContainer = document.getElementById(`qr-${index}`);
+            
+            btn.innerHTML = '<div class="loading"></div> Generando QR...';
+            
             try {
-                const connectBtn = document.getElementById('connect-btn');
-                connectBtn.innerHTML = '<span class="loading"></span> Generando QR...';
-                connectBtn.disabled = true;
-
-                const response = await fetch(`/api/instances/${locationId}/activate`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ position: 1 })
+                const response = await fetch(`/api/instances/${locationId}/${index + 1}/connect`, {
+                    method: 'POST'
                 });
-
+                
                 const data = await response.json();
                 
                 if (data.success && data.qrCode) {
-                    await loadInstance(); // Recargar datos
-                    showQRModal(data.qrCode);
+                    qrContainer.innerHTML = `<img src="${data.qrCode}" alt="QR Code" class="qr-code">`;
+                    btn.innerHTML = '📱 Escanea el QR con WhatsApp';
+                } else {
+                    throw new Error(data.error || 'Error generando QR code');
                 }
             } catch (error) {
-                console.error('Error connecting WhatsApp:', error);
-                alert('Error al conectar WhatsApp');
-            } finally {
-                document.getElementById('connect-btn').disabled = false;
+                btn.innerHTML = '❌ Error - Reintentar';
+                showError(`Error conectando instancia: ${error.message}`);
             }
         }
 
-        async function disconnectWhatsApp() {
-            if (!confirm('¿Desconectar WhatsApp?')) return;
-
-            try {
-                const response = await fetch(`/api/instances/${locationId}/disconnect`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ position: 1 })
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    await loadInstance();
-                }
-            } catch (error) {
-                console.error('Error disconnecting WhatsApp:', error);
-                alert('Error al desconectar WhatsApp');
-            }
+        function showError(message) {
+            document.getElementById('errorContainer').innerHTML = `
+                <div class="error">${message}</div>
+            `;
         }
 
-        function showQRModal(qrCode) {
-            const modal = document.getElementById('qr-modal');
-            const qrCodeImg = document.getElementById('qr-code-large');
-            
-            qrCodeImg.src = qrCode;
-            modal.classList.add('active');
-        }
+        // Auto refresh every 30 seconds
+        setInterval(loadInstances, 30000);
 
-        function closeQRModal() {
-            document.getElementById('qr-modal').classList.remove('active');
-        }
-
-        async function loadStatistics() {
-            try {
-                const response = await fetch(`/api/statistics/${locationId}/today`);
-                const stats = await response.json();
-                
-                document.getElementById('messages-received').textContent = stats.messages_received || 0;
-                document.getElementById('messages-sent').textContent = stats.messages_sent || 0;
-                document.getElementById('contacts-created').textContent = stats.contacts_created || 0;
-            } catch (error) {
-                console.error('Error loading statistics:', error);
-            }
-        }
-
-        function connectWebSocket() {
-            socket = new WebSocket(`ws://${window.location.host}`);
-            
-            socket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                
-                if (data.type === 'connection_update' && data.locationId === locationId) {
-                    loadInstance();
-                    
-                    if (data.status === 'connected') {
-                        closeQRModal();
-                        showNotification('¡WhatsApp conectado exitosamente!', 'success');
-                    }
-                }
-                
-                if (data.type === 'new_message' && data.locationId === locationId) {
-                    loadStatistics();
-                }
-            };
-        }
-
-        function showNotification(message, type) {
-            console.log(`[${type.toUpperCase()}] ${message}`);
-        }
-
-        // Cerrar modal al hacer clic fuera
-        window.onclick = (event) => {
-            const modal = document.getElementById('qr-modal');
-            if (event.target === modal) {
-                closeQRModal();
-            }
-        };
+        // Initial load
+        loadInstances();
     </script>
 </body>
 </html>
