@@ -57,8 +57,14 @@ class EvolutionService extends EventEmitter {
 
       return response.data;
     } catch (error) {
-      console.error('Error creating instance:', error.message);
-      throw error;
+      console.error('❌ Error creating instance:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: `${this.apiUrl}/instance/create`
+      });
+      // Return null instead of throwing to continue with other instances
+      return null;
     }
   }
 
@@ -282,8 +288,9 @@ class EvolutionService extends EventEmitter {
         console.log(`🔄 Creating instance ${i}/${count} for client ${locationId}`);
         
         const result = await this.createInstance(instanceName);
+        console.log(`📊 Instance creation result for ${instanceName}:`, result ? 'SUCCESS' : 'FAILED');
         
-        if (result.instance) {
+        if (result) {
           // Configurar webhook para N8N (mantener flujo existente del usuario)
           const webhookUrl = `https://ray.cloude.es/webhook/evolution1?location=${locationId}&instance=${i}`;
           
