@@ -1,0 +1,53 @@
+{
+  "name": "SMS Scanner Evolution - Ray (SIMPLE FIXED)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evolution1",
+        "responseMode": "onReceived",
+        "options": {
+          "responseData": "Test webhook received successfully"
+        }
+      },
+      "id": "webhook-evolution-simple",
+      "name": "Evolution Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 340],
+      "webhookId": "evolution-webhook-simple"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ✅ CÓDIGO SIMPLE PARA TESTING\nconst data = $input.all()[0].json;\n\nconsole.log('📨 Webhook Evolution recibido:', JSON.stringify(data, null, 2));\n\n// Log completo para debugging\nconsole.log('Headers:', $input.all()[0].headers);\nconsole.log('Query:', $input.all()[0].query);\nconsole.log('Body:', $input.all()[0].body);\n\n// Solo log por ahora, sin procesamiento\nreturn {\n  success: true,\n  message: 'Webhook recibido correctamente',\n  timestamp: new Date().toISOString(),\n  received_data: data,\n  headers: $input.all()[0].headers\n};"
+      },
+      "id": "simple-logger",
+      "name": "Simple Logger",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 340]
+    }
+  ],
+  "connections": {
+    "Evolution Webhook": {
+      "main": [
+        [
+          {
+            "node": "Simple Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["evolution-api", "test", "simple"],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-22T03:20:00.000Z",
+  "versionId": "1"
+}

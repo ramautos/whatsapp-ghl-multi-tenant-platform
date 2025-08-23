@@ -1,0 +1,45 @@
+{
+  "name": "evolution-ghl-intelligent-integration",
+  "version": "1.0.0",
+  "description": "Integración inteligente WhatsApp-GoHighLevel via Evolution API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "setup": "node setup-config.js",
+    "migrate": "node scripts/run-migrations.js",
+    "docker:build": "docker build -t evolution-ghl .",
+    "docker:run": "docker run -p 3000:3000 evolution-ghl",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "socket.io": "^4.7.0",
+    "qrcode": "^1.5.3",
+    "openai": "^4.0.0",
+    "pg": "^8.11.3",
+    "redis": "^4.6.5",
+    "node-cron": "^3.0.2",
+    "winston": "^3.11.0",
+    "multer": "^1.4.5-lts.1",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "whatsapp",
+    "gohighlevel",
+    "evolution-api",
+    "crm",
+    "automation"
+  ]
+}

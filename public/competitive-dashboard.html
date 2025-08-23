@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Business Manager Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0f0f23;
+            color: white;
+            min-height: 100vh;
+        }
+
+        /* Header Superior */
+        .top-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 2px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .brand svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .tagline {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        /* Layout Principal */
+        .main-container {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            gap: 20px;
+            padding: 20px;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Sidebar Izquierdo */
+        .sidebar {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .nav-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Panel Central - Instancias */
+        .instances-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .panel-title {
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .client-info {
+            text-align: right;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* Grid de Instancias */
+        .instances-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 15px;
+        }
+
+        .instance-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .instance-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .instance-card.connected::before {
+            opacity: 1;
+        }
+
+        .instance-card.connected {
+            border-color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+        }
+
+        .instance-card.qr-pending {
+            border-color: #fbbf24;
+            background: rgba(251, 191, 36, 0.1);
+            animation: pulse-yellow 2s infinite;
+        }
+
+        @keyframes pulse-yellow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
+        }
+
+        .instance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .instance-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .instance-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6b7280;
+        }
+
+        .status-dot.connected {
+            background: #4ade80;
+            animation: pulse-green 2s infinite;
+        }
+
+        .status-dot.qr-pending {
+            background: #fbbf24;
+            animation: pulse-yellow 1.5s infinite;
+        }
+
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+        }
+
+        .instance-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .phone-display {
+            font-family: 'Courier New', monospace;
+            color: #4ade80;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .not-connected-text {
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        .instance-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #4ade80;
+            color: #0f172a;
+        }
+
+        .btn-warning {
+            background: #fbbf24;
+            color: #0f172a;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Panel Derecho - Stats */
+        .stats-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stats-section {
+            margin-bottom: 25px;
+        }
+
+        .stats-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #4ade80;
+        }
+
+        /* Alertas y Notificaciones */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            color: #4ade80;
+        }
+
+        .alert-warning {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: #fbbf24;
+        }
+
+        /* Modal QR */
+        .qr-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .qr-modal.active {
+            display: flex;
+        }
+
+        .qr-modal-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .qr-display {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .qr-instructions {
+            font-size: 14px;
+            opacity: 0.8;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        /* Efectos Especiales */
+        .glow-effect {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 5px rgba(102, 126, 234, 0.2); }
+            to { box-shadow: 0 0 20px rgba(102, 126, 234, 0.6); }
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+            }
+            
+            .instances-grid {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Superior -->
+    <header class="top-header">
+        <div class="brand">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.149-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+            </svg>
+            WhatsApp Business Manager Pro
+        </div>
+        <div class="tagline">Conecta hasta 5 WhatsApp Business con Evolution API | Superior a Wazzap.mx</div>
+    </header>
+
+    <!-- Layout Principal -->
+    <div class="main-container">
+        <!-- Sidebar Izquierdo -->
+        <aside class="sidebar">
+            <nav>
+                <div class="nav-item active">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13z"/>
+                    </svg>
+                    Dashboard
+                </div>
+                <div class="nav-item">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/>
+                        <path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586z"/>
+                    </svg>
+                    Historial
+                </div>
+                <div class="nav-item">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2.5 19.6L3.8 20.2V11.2L2.5 10.6V19.6Z"/>
+                        <path d="M15.8 3.4L14.2 4.2L10 2L8.4 2.8L12.6 5L8.4 7.2L4.2 5L2.6 5.8L6.8 8L2.6 10.2L4.2 11L8.4 8.8L12.6 11L14.2 10.2L10 8L14.2 5.8L18.4 8L20 7.2L15.8 5L20 2.8L18.4 2L14.2 4.2L15.8 3.4Z"/>
+                    </svg>
+                    Estadísticas  
+                </div>
+                <div class="nav-item">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8 0-1.168.258-2.275.681-3.283L13 17v1a2 2 0 0 1-2 2h-1zm6.316-5.717C18.104 14.103 18 13.64 18 13v-2a2 2 0 0 1 2-2h1c.64 0 1.103-.104 1.283-.316C20.775 9.261 20 10.57 20 12c0 1.43-.775 2.739-2.684 4.283z"/>
+                    </svg>
+                    Configuración
+                </div>
+            </nav>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div class="alert alert-success">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm-1.999 14L6 12.001l1.999-2L10 12.001l6.001-6L18 7.999 10.001 16z"/>
+                    </svg>
+                    Evolution API Conectada
+                </div>
+                <div class="alert alert-warning">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M11.001 10h2v5h-2zM11 16h2v2h-2z"/>
+                        <path d="M13.768 4.2C13.42 3.545 12.742 3.138 12 3.138s-1.42.407-1.768 1.063L2.894 18.064a1.986 1.986 0 0 0 .054 1.968A1.984 1.984 0 0 0 4.661 21h14.678c.708 0 1.349-.362 1.714-.968a1.989 1.989 0 0 0 .054-1.968L13.768 4.2zM4.661 19L12 5.137 19.344 19H4.661z"/>
+                    </svg>
+                    Límite: 3/5 Instancias
+                </div>
+            </div>
+        </aside>
+
+        <!-- Panel Central - Instancias -->
+        <main class="instances-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17 3H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM7 19V5h10v14H7z"/>
+                            <circle cx="12" cy="17" r="1"/>
+                        </svg>
+                        Mis Instancias WhatsApp
+                    </h2>
+                    <div class="client-info" id="client-info">
+                        <strong id="company-name">Mi Empresa</strong><br>
+                        <span id="location-display">Location: ABC123456789</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="instances-grid" id="instances-grid">
+                <!-- Instancias generadas dinámicamente -->
+            </div>
+        </main>
+
+        <!-- Panel Derecho - Estadísticas -->
+        <aside class="stats-panel">
+            <div class="stats-section">
+                <h3 class="stats-title">📊 Estadísticas Hoy</h3>
+                <div class="stat-item">
+                    <span class="stat-label">Mensajes Recibidos</span>
+                    <span class="stat-value" id="messages-received">47</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Mensajes Enviados</span>
+                    <span class="stat-value" id="messages-sent">23</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Contactos Nuevos</span>
+                    <span class="stat-value" id="contacts-created">8</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Respuestas IA</span>
+                    <span class="stat-value" id="ai-responses">15</span>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <h3 class="stats-title">⚡ Estado del Sistema</h3>
+                <div class="stat-item">
+                    <span class="stat-label">Evolution API</span>
+                    <span class="stat-value">🟢 Activa</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">GoHighLevel</span>
+                    <span class="stat-value">🟢 Conectado</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Uptime</span>
+                    <span class="stat-value">99.8%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Última Sync</span>
+                    <span class="stat-value">Hace 2m</span>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <h3 class="stats-title">🎯 Ventajas vs Wazzap.mx</h3>
+                <div class="stat-item">
+                    <span class="stat-label">API Oficial</span>
+                    <span class="stat-value">✅ Sí</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Sin Baneos</span>
+                    <span class="stat-value">✅ 100%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Multi-tenant</span>
+                    <span class="stat-value">✅ Sí</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Tiempo Real</span>
+                    <span class="stat-value">✅ WebSockets</span>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modal QR -->
+    <div id="qr-modal" class="qr-modal">
+        <div class="qr-modal-content">
+            <h3 style="margin-bottom: 15px;">📱 Conectar WhatsApp</h3>
+            <div class="qr-display" id="qr-display">
+                <div style="width: 200px; height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #333; border-radius: 8px; margin: 0 auto;">
+                    QR Code aquí
+                </div>
+            </div>
+            <p class="qr-instructions">
+                1. Abre WhatsApp en tu teléfono<br>
+                2. Ve a Configuración → Dispositivos vinculados<br>
+                3. Toca "Vincular dispositivo"<br>
+                4. Escanea este código QR
+            </p>
+            <button class="btn btn-danger" onclick="closeQRModal()">Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        // Simulación de datos del cliente
+        const clientData = {
+            locationId: 'ABC123456789',
+            companyName: 'Mi Empresa Pro',
+            instances: [
+                { position: 1, status: 'connected', phone: '+18099939042', name: 'asesor1' },
+                { position: 2, status: 'qr-pending', phone: null, name: 'asesor2' },
+                { position: 3, status: 'inactive', phone: null, name: 'asesor3' },
+                { position: 4, status: 'inactive', phone: null, name: 'asesor4' },
+                { position: 5, status: 'inactive', phone: null, name: 'asesor5' }
+            ]
+        };
+
+        // Inicializar dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            updateClientInfo();
+            renderInstances();
+            simulateRealTimeUpdates();
+        });
+
+        function updateClientInfo() {
+            document.getElementById('company-name').textContent = clientData.companyName;
+            document.getElementById('location-display').textContent = `Location: ${clientData.locationId}`;
+        }
+
+        function renderInstances() {
+            const grid = document.getElementById('instances-grid');
+            grid.innerHTML = '';
+
+            clientData.instances.forEach(instance => {
+                const card = createInstanceCard(instance);
+                grid.appendChild(card);
+            });
+        }
+
+        function createInstanceCard(instance) {
+            const card = document.createElement('div');
+            card.className = `instance-card ${instance.status}`;
+            if (instance.status === 'connected') card.classList.add('glow-effect');
+
+            card.innerHTML = `
+                <div class="instance-header">
+                    <div class="instance-number">${instance.position}</div>
+                    <div class="instance-status">
+                        <div class="status-dot ${instance.status}"></div>
+                        <span>${getStatusText(instance.status)}</span>
+                    </div>
+                </div>
+                <div class="instance-name">${instance.name} (${instance.position})</div>
+                <div class="phone-display">
+                    ${instance.phone || '<span class="not-connected-text">Not Connected</span>'}
+                </div>
+                <div class="instance-actions">
+                    ${getActionButtons(instance)}
+                </div>
+            `;
+
+            return card;
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'connected': return 'Conectado';
+                case 'qr-pending': return 'Escaneando...';
+                case 'inactive': return 'Inactivo';
+                default: return 'Desconocido';
+            }
+        }
+
+        function getActionButtons(instance) {
+            switch(instance.status) {
+                case 'inactive':
+                    return `<button class="btn btn-primary" onclick="activateInstance(${instance.position})">🚀 Conectar</button>`;
+                case 'qr-pending':
+                    return `<button class="btn btn-warning" onclick="showQR(${instance.position})">📱 Ver QR</button>`;
+                case 'connected':
+                    return `
+                        <button class="btn btn-success" disabled>✅ Activo</button>
+                        <button class="btn btn-danger" onclick="disconnectInstance(${instance.position})">❌ Desconectar</button>
+                    `;
+                default:
+                    return '';
+            }
+        }
+
+        function activateInstance(position) {
+            console.log(`Activando instancia ${position}`);
+            
+            // Simular activación
+            const instance = clientData.instances.find(i => i.position === position);
+            instance.status = 'qr-pending';
+            
+            renderInstances();
+            showQR(position);
+            
+            // Simular conexión después de 5 segundos
+            setTimeout(() => {
+                instance.status = 'connected';
+                instance.phone = `+1809${Math.random().toString().substr(2, 7)}`;
+                renderInstances();
+                closeQRModal();
+                showNotification(`¡WhatsApp ${position} conectado exitosamente!`, 'success');
+            }, 5000);
+        }
+
+        function disconnectInstance(position) {
+            if (confirm(`¿Desconectar el WhatsApp ${position}?`)) {
+                const instance = clientData.instances.find(i => i.position === position);
+                instance.status = 'inactive';
+                instance.phone = null;
+                renderInstances();
+                showNotification(`WhatsApp ${position} desconectado`, 'info');
+            }
+        }
+
+        function showQR(position) {
+            document.getElementById('qr-modal').classList.add('active');
+            
+            // Simular QR code (en producción sería la imagen real)
+            const qrDisplay = document.getElementById('qr-display');
+            qrDisplay.innerHTML = `
+                <div style="width: 256px; height: 256px; background: white; display: flex; align-items: center; justify-content: center; color: #333; border-radius: 8px; margin: 0 auto; font-size: 12px; text-align: center;">
+                    <div>
+                        <div style="width: 200px; height: 200px; background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSJ3aGl0ZSIvPgo8cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiLz4KPHN2ZyB4PSI1MCIgeT0iNTAiIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj4KPHRleHQgeD0iNTAiIHk9IjUwIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjhweCIgZmlsbD0iYmxhY2siIHRleHQtYW5jaG9yPSJtaWRkbGUiPkZha2UgUVI8L3RleHQ+Cjwvc3ZnPgo8L3N2Zz4K') center/contain no-repeat;"></div>
+                        <br>WhatsApp ${position}
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeQRModal() {
+            document.getElementById('qr-modal').classList.remove('active');
+        }
+
+        function showNotification(message, type) {
+            // En producción sería una notificación real
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function simulateRealTimeUpdates() {
+            // Simular actualizaciones en tiempo real de estadísticas
+            setInterval(() => {
+                const messagesReceived = document.getElementById('messages-received');
+                const currentValue = parseInt(messagesReceived.textContent);
+                if (Math.random() > 0.7) {
+                    messagesReceived.textContent = currentValue + 1;
+                }
+            }, 10000);
+        }
+
+        // Cerrar modal al hacer clic fuera
+        window.onclick = (event) => {
+            const modal = document.getElementById('qr-modal');
+            if (event.target === modal) {
+                closeQRModal();
+            }
+        };
+    </script>
+</body>
+</html>

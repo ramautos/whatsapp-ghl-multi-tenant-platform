@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolution-GHL Integration Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.7.0/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <i class="fab fa-whatsapp text-green-500 text-2xl mr-3"></i>
+                    <h1 class="text-xl font-bold text-gray-800">Evolution-GHL Integration</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center">
+                        <span class="w-3 h-3 bg-green-500 rounded-full mr-2 connection-status"></span>
+                        <span class="text-sm text-gray-600">Connected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-500">
+                        <i class="fas fa-comments text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Mensajes Hoy</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="messages-today">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-500">
+                        <i class="fas fa-users text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Contactos Activos</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="active-contacts">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-500">
+                        <i class="fas fa-robot text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">IA Respuestas</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="ai-responses">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-500">
+                        <i class="fas fa-sync text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Sincronizados</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="synced-messages">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6">
+                    <a href="#" class="tab-button active border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="instances">
+                        <i class="fas fa-mobile-alt mr-2"></i>Instancias WhatsApp
+                    </a>
+                    <a href="#" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="messages">
+                        <i class="fas fa-comments mr-2"></i>Mensajes
+                    </a>
+                    <a href="#" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="analytics">
+                        <i class="fas fa-chart-line mr-2"></i>Analytics
+                    </a>
+                    <a href="#" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="settings">
+                        <i class="fas fa-cog mr-2"></i>Configuración
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        
+        <!-- Instances Tab -->
+        <div id="instances-tab" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- QR Scanner -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                        <i class="fas fa-qrcode mr-2"></i>Escanear QR WhatsApp
+                    </h3>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nombre de Instancia</label>
+                        <input type="text" id="instance-name" placeholder="mi-whatsapp-1" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <button onclick="generateQR()" class="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                        <i class="fas fa-qrcode mr-2"></i>Generar QR Code
+                    </button>
+                    
+                    <!-- QR Code Display -->
+                    <div id="qr-container" class="mt-6 text-center hidden">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                            <img id="qr-image" src="" alt="QR Code" class="mx-auto mb-4 max-w-full h-auto">
+                            <p class="text-sm text-gray-600">Escanea este código con WhatsApp</p>
+                            <div class="mt-4">
+                                <div class="flex items-center justify-center">
+                                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500 mr-2"></div>
+                                    <span class="text-sm text-gray-600">Esperando conexión...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Connection Status -->
+                    <div id="connection-status" class="mt-4 hidden">
+                        <div class="bg-green-50 border border-green-200 rounded-md p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-check-circle text-green-400"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-green-800">¡Conectado!</h3>
+                                    <div class="mt-2 text-sm text-green-700">
+                                        <p>WhatsApp conectado exitosamente</p>
+                                        <p class="font-medium">Número: <span id="phone-number"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Instance List -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                        <i class="fas fa-list mr-2"></i>Instancias Activas
+                    </h3>
+                    
+                    <div id="instances-list" class="space-y-3">
+                        <!-- Dynamic content -->
+                    </div>
+                    
+                    <button onclick="refreshInstances()" class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                        <i class="fas fa-sync-alt mr-2"></i>Actualizar Lista
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Messages Tab -->
+        <div id="messages-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Mensajes Recientes</h3>
+                </div>
+                <div class="p-6">
+                    <div id="messages-list" class="space-y-4">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Analytics Tab -->
+        <div id="analytics-tab" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Mensajes por Día</h3>
+                    <canvas id="messages-chart"></canvas>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Análisis de Sentimientos</h3>
+                    <canvas id="sentiment-chart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Settings Tab -->
+        <div id="settings-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-6">Configuración de Integración</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-md font-medium text-gray-800 mb-4">Evolution API</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">URL API</label>
+                                <input type="text" id="evolution-url" value="https://evolution.cloude.es" disabled
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                                <input type="password" id="evolution-key" placeholder="••••••••••••••••"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-md font-medium text-gray-800 mb-4">GoHighLevel</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Location ID</label>
+                                <input type="text" id="ghl-location" value="jtEqGdhkoR6iePmZaCmd" disabled
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Access Token</label>
+                                <input type="password" id="ghl-token" placeholder="••••••••••••••••"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8">
+                    <h4 class="text-md font-medium text-gray-800 mb-4">Configuración de IA</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Respuestas Automáticas</label>
+                            <select id="auto-responses" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                <option value="enabled">Habilitadas</option>
+                                <option value="business-hours">Solo horario laboral</option>
+                                <option value="disabled">Deshabilitadas</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Modelo IA</label>
+                            <select id="ai-model" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                <option value="gpt-4">GPT-4</option>
+                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Idioma</label>
+                            <select id="language" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                <option value="es">Español</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <button onclick="saveSettings()" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-6 rounded-md transition duration-300">
+                        <i class="fas fa-save mr-2"></i>Guardar Configuración
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2">
+        <!-- Dynamic toasts -->
+    </div>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

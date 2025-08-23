@@ -1,0 +1,102 @@
+# 🚫 ARCHIVOS A IGNORAR - PLATAFORMA WHATSAPP-GHL
+
+# Dependencias
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Variables de entorno (CRÍTICO - NO SUBIR)
+.env
+.env.local
+.env.production
+.env.development
+
+# Logs
+logs/
+*.log
+
+# Runtime
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage y testing
+coverage/
+.nyc_output
+.coverage
+
+# Build y dist
+build/
+dist/
+out/
+
+# Cache
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+
+# Base de datos local
+*.db
+*.sqlite
+*.sqlite3
+data/
+database/*.db
+
+# Archivos temporales
+tmp/
+temp/
+.tmp/
+
+# IDE y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Sistema operativo
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archivos de configuración sensibles
+config/production.js
+credentials/
+secrets/
+*.key
+*.pem
+*.crt
+
+# Uploads y media
+uploads/
+media/
+public/uploads/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# QR codes temporales
+qr-codes/
+temp-qr/
+
+# Backups
+backup/
+*.backup
+
+# Archivos específicos del proyecto
+webhook-logs/
+instance-data/
+client-data/
+
+# Variables de Evolution API (sensibles)
+evolution-*.env
+*credentials*
+*-config.env

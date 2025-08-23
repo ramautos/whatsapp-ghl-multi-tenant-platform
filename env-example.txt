@@ -1,0 +1,66 @@
+# 🎯 CONFIGURACIÓN PLATAFORMA MULTI-TENANT WHATSAPP-GHL
+# Copiar a .env y completar con valores reales
+
+# ================================
+# CONFIGURACIÓN GENERAL
+# ================================
+NODE_ENV=development
+PORT=3000
+APP_URL=https://tu-dominio.com
+
+# ================================
+# EVOLUTION API
+# ================================
+EVOLUTION_API_URL=https://evolutionv2.cloude.es
+EVOLUTION_API_KEY=tu-api-key-evolution
+
+# ================================
+# BASE DE DATOS
+# ================================
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=whatsapp_ghl_platform
+DB_USER=usuario
+DB_PASSWORD=password
+
+# URL completa para conexiones
+DATABASE_URL=mysql://usuario:password@localhost:3306/whatsapp_ghl_platform
+
+# ================================
+# GOHIGHLEVEL API
+# ================================
+# Estas son para tu app/marketplace
+GHL_CLIENT_ID=tu-client-id-app-ghl
+GHL_CLIENT_SECRET=tu-client-secret-app-ghl
+GHL_REDIRECT_URI=https://tu-dominio.com/api/ghl/callback
+
+# URL base de la API de GHL
+GHL_API_URL=https://services.leadconnectorhq.com
+
+# ================================
+# SEGURIDAD
+# ================================
+JWT_SECRET=tu-jwt-secret-super-seguro-aqui
+ENCRYPTION_KEY=tu-encryption-key-32-caracteres
+
+# ================================
+# WEBHOOKS Y CALLBACKS
+# ================================
+# URL pública donde Evolution puede enviar webhooks
+WEBHOOK_BASE_URL=https://tu-dominio.com
+
+# URL específica para webhooks de Evolution
+EVOLUTION_WEBHOOK_URL=https://tu-dominio.com/api/webhook/messages
+
+# ================================
+# CONFIGURACIONES DE LA PLATAFORMA
+# ================================
+# Nombre de tu plataforma
+PLATFORM_NAME="WhatsApp Business Manager"
+
+# Email de soporte
+SUPPORT_EMAIL=soporte@tu-dominio.com
+
+# Límites por defecto
+DEFAULT_MAX_INSTANCES=5
+PREMIUM_MAX_INSTANCES=10
