@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - WhatsApp-GHL Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .admin-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 1200px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .stats-card {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .client-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4facfe;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 20px;
+        }
+        
+        .connected { background: #28a745; color: white; }
+        .disconnected { background: #dc3545; color: white; }
+        
+        .refresh-btn {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="text-primary">
+                        <i class="fas fa-cogs me-2"></i>
+                        Panel de Administración
+                    </h1>
+                    <button class="btn refresh-btn" onclick="loadData()">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Actualizar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas Globales -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number" id="totalClients">0</div>
+                    <div>Clientes Activos</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number" id="totalInstances">0</div>
+                    <div>Instancias Totales</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number" id="connectedInstances">0</div>
+                    <div>Conectadas</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number" id="messagesToday">0</div>
+                    <div>Mensajes Hoy</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Clientes -->
+        <div class="row">
+            <div class="col-12">
+                <h3 class="mb-3">
+                    <i class="fas fa-users me-2"></i>
+                    Clientes Registrados
+                </h3>
+                <div id="clientsList">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+        </div>
+
+        <!-- System Health -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h3 class="mb-3">
+                    <i class="fas fa-heartbeat me-2"></i>
+                    Estado del Sistema
+                </h3>
+                <div class="card">
+                    <div class="card-body">
+                        <pre id="systemHealth" style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 12px;"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Cargar datos del sistema
+        async function loadData() {
+            try {
+                // Cargar estadísticas globales
+                const statsResponse = await fetch('/api/admin/stats');
+                const stats = await statsResponse.json();
+                
+                if (stats.success) {
+                    document.getElementById('totalClients').textContent = stats.stats.total_clients || 0;
+                    document.getElementById('totalInstances').textContent = stats.stats.total_instances || 0;
+                    document.getElementById('connectedInstances').textContent = stats.stats.connected_instances || 0;
+                    document.getElementById('messagesToday').textContent = stats.stats.messages_today || 0;
+                }
+
+                // Cargar lista de clientes
+                const clientsResponse = await fetch('/api/admin/clients');
+                const clients = await clientsResponse.json();
+                
+                if (clients.success) {
+                    displayClients(clients.clients);
+                }
+
+                // Cargar health del sistema
+                const healthResponse = await fetch('/health');
+                const health = await healthResponse.json();
+                document.getElementById('systemHealth').textContent = JSON.stringify(health, null, 2);
+
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+                alert('Error cargando datos de administración');
+            }
+        }
+
+        function displayClients(clients) {
+            const container = document.getElementById('clientsList');
+            
+            if (!clients || clients.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No hay clientes registrados aún
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = clients.map(client => `
+                <div class="client-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <h5 class="mb-1">${client.name}</h5>
+                            <small class="text-muted">${client.company_name || 'Sin empresa'}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Location ID:</strong><br>
+                            <code>${client.location_id}</code>
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Email:</strong><br>
+                            ${client.email}
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Instancias:</strong><br>
+                            ${client.connected_instances}/${client.total_instances}
+                            <span class="status-badge ${client.connected_instances > 0 ? 'connected' : 'disconnected'}">
+                                ${client.connected_instances > 0 ? 'Conectado' : 'Desconectado'}
+                            </span>
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Registrado:</strong><br>
+                            <small>${new Date(client.registered_at).toLocaleDateString()}</small>
+                        </div>
+                        <div class="col-md-1">
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/simple-dashboard.html?location=${client.location_id}">
+                                        <i class="fas fa-eye me-2"></i>Ver Dashboard
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="viewClientDetails('${client.location_id}')">
+                                        <i class="fas fa-info me-2"></i>Ver Detalles
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewClientDetails(locationId) {
+            // Abrir modal con detalles del cliente
+            alert(`Ver detalles de cliente: ${locationId}`);
+        }
+
+        // Auto-refresh cada 30 segundos
+        setInterval(loadData, 30000);
+        
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>

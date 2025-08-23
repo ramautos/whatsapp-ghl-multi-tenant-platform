@@ -13,8 +13,8 @@ class EvolutionService extends EventEmitter {
 
   async initialize() {
     try {
-      // Check Evolution API health
-      const response = await axios.get(`${this.apiUrl}/health`);
+      // Check Evolution API health  
+      const response = await axios.get(`${this.apiUrl}`);
       this.connected = response.status === 200;
       console.log('Evolution API connected successfully');
     } catch (error) {
@@ -25,6 +25,11 @@ class EvolutionService extends EventEmitter {
 
   async createInstance(instanceName, options = {}) {
     try {
+      console.log('🔧 Creating instance with:');
+      console.log('- URL:', `${this.apiUrl}/instance/create`);
+      console.log('- API Key:', this.apiKey);
+      console.log('- Instance Name:', instanceName);
+      
       const response = await axios.post(
         `${this.apiUrl}/instance/create`,
         {
@@ -257,6 +262,136 @@ class EvolutionService extends EventEmitter {
       name,
       ...data
     }));
+  }
+
+  // ================================
+  // MARKETPLACE AUTOMATION METHODS
+  // ================================
+
+  // Crear múltiples instancias para un cliente nuevo
+  async createClientInstances(locationId, count = 5) {
+    const instances = [];
+    const results = [];
+
+    console.log(`🚀 Creating ${count} instances for client: ${locationId}`);
+
+    for (let i = 1; i <= count; i++) {
+      const instanceName = `${locationId}_${i}`;
+      
+      try {
+        console.log(`🔄 Creating instance ${i}/${count} for client ${locationId}`);
+        
+        const result = await this.createInstance(instanceName);
+        
+        if (result.instance) {
+          // Configurar webhook para cada instancia
+          const webhookUrl = `${process.env.APP_URL}/api/webhook/messages?location=${locationId}&instance=${i}`;
+          
+          // Configurar webhook
+          try {
+            await this.setWebhook(instanceName, webhookUrl);
+            console.log(`✅ Webhook configured for ${instanceName}`);
+          } catch (webhookError) {
+            console.warn(`⚠️ Webhook config failed for ${instanceName}:`, webhookError.message);
+          }
+          
+          instances.push({
+            position: i,
+            instanceName: instanceName,
+            status: 'created',
+            webhookUrl: webhookUrl,
+            qrCode: null,
+            connectionState: 'disconnected'
+          });
+
+          console.log(`✅ Instance ${instanceName} created successfully`);
+        }
+        
+        results.push(result);
+        
+        // Espera entre creaciones para evitar rate limiting
+        if (i < count) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+        
+      } catch (error) {
+        console.error(`❌ Error creating instance ${instanceName}:`, error);
+        results.push({
+          success: false,
+          error: error.message,
+          instanceName
+        });
+      }
+    }
+
+    const totalCreated = instances.length;
+    console.log(`🎯 Created ${totalCreated}/${count} instances for ${locationId}`);
+
+    return {
+      success: instances.length > 0,
+      instances,
+      results,
+      totalCreated,
+      totalRequested: count,
+      locationId
+    };
+  }
+
+  // Obtener estado de todas las instancias de un cliente
+  async getClientInstancesStatus(locationId) {
+    const instances = [];
+    
+    for (let i = 1; i <= 5; i++) {
+      const instanceName = `${locationId}_${i}`;
+      
+      try {
+        const status = await this.getInstanceInfo(instanceName);
+        instances.push({
+          position: i,
+          instanceName,
+          status: status.success ? status.data : { state: 'error' },
+          connected: status.success && status.data?.state === 'open'
+        });
+      } catch (error) {
+        instances.push({
+          position: i,
+          instanceName,
+          status: { state: 'error', error: error.message },
+          connected: false
+        });
+      }
+    }
+
+    return {
+      locationId,
+      instances,
+      totalInstances: instances.length,
+      connectedInstances: instances.filter(i => i.connected).length
+    };
+  }
+
+  // Eliminar todas las instancias de un cliente
+  async deleteClientInstances(locationId) {
+    const results = [];
+    
+    for (let i = 1; i <= 5; i++) {
+      const instanceName = `${locationId}_${i}`;
+      
+      try {
+        const result = await this.deleteInstance(instanceName);
+        results.push({ instanceName, result });
+        console.log(`🗑️ Deleted instance ${instanceName}`);
+      } catch (error) {
+        console.error(`❌ Error deleting ${instanceName}:`, error);
+        results.push({ instanceName, error: error.message });
+      }
+    }
+
+    return {
+      success: true,
+      results,
+      locationId
+    };
   }
 }
 

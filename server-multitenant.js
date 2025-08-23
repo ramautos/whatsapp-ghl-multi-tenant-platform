@@ -147,6 +147,42 @@ function notifyNewMessage(locationId, messageData) {
 }
 
 // ================================
+// HEALTH CHECKS Y MONITORING
+// ================================
+
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        version: process.env.npm_package_version || '1.0.0',
+        environment: process.env.NODE_ENV || 'development',
+        services: {
+            evolution: evolutionService.isConnected(),
+            database: true // TODO: Implementar check real
+        }
+    });
+});
+
+// Endpoint para métricas básicas
+app.get('/metrics', (req, res) => {
+    res.json({
+        timestamp: new Date().toISOString(),
+        process: {
+            pid: process.pid,
+            uptime: process.uptime(),
+            memory: process.memoryUsage(),
+            cpu: process.cpuUsage()
+        },
+        system: {
+            platform: process.platform,
+            arch: process.arch,
+            nodeVersion: process.version
+        }
+    });
+});
+
+// ================================
 // MANEJO DE ERRORES
 // ================================
 
@@ -184,8 +220,8 @@ async function startServer() {
         console.log('✅ Evolution API service initialized');
 
         // Verificar conexión a base de datos
-        const db = require('./config/database');
-        await db.query('SELECT 1');
+        const db = require('./config/database-sqlite');
+        await db.initialize();
         console.log('✅ Database connection verified');
 
         // Iniciar servidor
@@ -231,42 +267,6 @@ async function gracefulShutdown(signal) {
         process.exit(1);
     }, 10000);
 }
-
-// ================================
-// HEALTH CHECKS Y MONITORING
-// ================================
-
-app.get('/health', (req, res) => {
-    res.json({
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        version: process.env.npm_package_version || '1.0.0',
-        environment: process.env.NODE_ENV || 'development',
-        services: {
-            evolution: evolutionService.isConnected(),
-            database: true // TODO: Implementar check real
-        }
-    });
-});
-
-// Endpoint para métricas básicas
-app.get('/metrics', (req, res) => {
-    res.json({
-        timestamp: new Date().toISOString(),
-        process: {
-            pid: process.pid,
-            uptime: process.uptime(),
-            memory: process.memoryUsage(),
-            cpu: process.cpuUsage()
-        },
-        system: {
-            platform: process.platform,
-            arch: process.arch,
-            nodeVersion: process.version
-        }
-    });
-});
 
 // ================================
 // EXPORT PARA TESTING

@@ -2,7 +2,7 @@
 
 const evolutionService = require('./evolutionService');
 const ghlService = require('./ghlService');
-const db = require('../config/database');
+const db = require('../config/database-sqlite');
 
 class MultiTenantService {
     constructor() {
@@ -11,23 +11,10 @@ class MultiTenantService {
 
     // Registrar nuevo cliente desde instalación GHL
     async registerGHLInstallation(data) {
-        const { locationId, companyName, accessToken, refreshToken, scopes } = data;
-        
         try {
-            // Guardar instalación GHL
-            await db.query(
-                `INSERT INTO ghl_installations 
-                (location_id, company_name, access_token, refresh_token, scopes) 
-                VALUES (?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE 
-                access_token = VALUES(access_token),
-                refresh_token = VALUES(refresh_token),
-                updated_at = NOW()`,
-                [locationId, companyName, accessToken, refreshToken, JSON.stringify(scopes)]
-            );
-
-            console.log(`✅ GHL Installation registered for ${locationId}`);
-            return { success: true, locationId };
+            const result = await db.registerGHLInstallation(data);
+            console.log(`✅ GHL Installation registered for ${data.locationId}`);
+            return result;
         } catch (error) {
             console.error('Error registering GHL installation:', error);
             throw error;
@@ -36,45 +23,10 @@ class MultiTenantService {
 
     // Registro de cliente en plataforma
     async registerClient(locationId, clientData) {
-        const { name, email, phone } = clientData;
-        
         try {
-            // Verificar que existe instalación GHL
-            const [installation] = await db.query(
-                'SELECT * FROM ghl_installations WHERE location_id = ?',
-                [locationId]
-            );
-
-            if (!installation.length) {
-                throw new Error('GHL installation not found. Please install the app first.');
-            }
-
-            // Crear cliente
-            await db.query(
-                `INSERT INTO clients 
-                (location_id, name, email, phone) 
-                VALUES (?, ?, ?, ?)`,
-                [locationId, name, email, phone]
-            );
-
-            // Crear configuración por defecto
-            await db.query(
-                `INSERT INTO client_settings (location_id) VALUES (?)`,
-                [locationId]
-            );
-
-            // Preparar 5 slots vacíos
-            for (let i = 1; i <= 5; i++) {
-                await db.query(
-                    `INSERT INTO whatsapp_instances 
-                    (location_id, instance_name, position, status) 
-                    VALUES (?, ?, ?, 'inactive')`,
-                    [locationId, `${locationId}_wa_${i}`, i]
-                );
-            }
-
-            console.log(`✅ Client registered: ${name} (${locationId})`);
-            return { success: true, locationId };
+            const result = await db.registerClient(locationId, clientData);
+            console.log(`✅ Client registered: ${clientData.name} (${locationId})`);
+            return result;
         } catch (error) {
             console.error('Error registering client:', error);
             throw error;

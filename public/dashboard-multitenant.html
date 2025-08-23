@@ -415,12 +415,12 @@
                 updateStats();
             } catch (error) {
                 console.error('Error loading instances:', error);
-                // Crear 5 slots por defecto si hay error
-                instances = Array.from({length: 5}, (_, i) => ({
-                    position: i + 1,
+                // Crear 1 slot por defecto si hay error
+                instances = [{
+                    position: 1,
                     status: 'inactive',
-                    instance_name: `${locationId}_wa_${i + 1}`
-                }));
+                    instance_name: locationId
+                }];
                 renderInstances();
             }
         }
@@ -429,16 +429,15 @@
             const container = document.getElementById('instances-container');
             container.innerHTML = '';
 
-            for (let i = 1; i <= 5; i++) {
-                const instance = instances.find(inst => inst.position === i) || {
-                    position: i,
-                    status: 'inactive',
-                    instance_name: `${locationId}_wa_${i}`
-                };
+            // Solo mostrar 1 instancia por cliente
+            const instance = instances.find(inst => inst.position === 1) || {
+                position: 1,
+                status: 'inactive',
+                instance_name: locationId
+            };
 
-                const slot = createInstanceSlot(instance);
-                container.appendChild(slot);
-            }
+            const slot = createInstanceSlot(instance);
+            container.appendChild(slot);
         }
 
         function createInstanceSlot(instance) {
@@ -448,7 +447,7 @@
             div.innerHTML = `
                 <div class="instance-info">
                     <div class="instance-number">${instance.position}</div>
-                    <div class="instance-name">asesor${instance.position} (${instance.position})</div>
+                    <div class="instance-name">WhatsApp Business (${instance.position})</div>
                 </div>
                 <div class="instance-status">
                     <span class="status-indicator ${instance.status === 'connected' ? 'connected' : ''} ${instance.status === 'qr_pending' ? 'qr-pending' : ''}"></span>

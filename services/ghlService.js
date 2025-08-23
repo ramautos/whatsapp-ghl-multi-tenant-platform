@@ -74,6 +74,143 @@ class GHLService extends EventEmitter {
     }
   }
 
+  // UPSERT CONTACT - Como tu N8N (método principal)
+  async upsertContact(locationId, contactData, accessToken = null) {
+    try {
+      const payload = {
+        locationId: locationId,
+        phone: contactData.phone,
+        firstName: contactData.firstName || 'WhatsApp User'
+      };
+
+      console.log(`🔄 GHL Contact Upsert:`, payload);
+
+      const response = await axios.post(
+        `${this.apiUrl}/contacts/upsert`,
+        payload,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken || this.accessToken}`,
+            'Content-Type': 'application/json',
+            'Version': '2021-07-28'
+          }
+        }
+      );
+
+      console.log(`✅ Contact upserted:`, response.data.contact?.id);
+      return response.data;
+
+    } catch (error) {
+      console.error('❌ Error upserting contact:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  // BUSCAR CONVERSACION - Como tu segundo HTTP request
+  async findOrCreateConversation(locationId, contactId, accessToken = null) {
+    try {
+      console.log(`🔍 Searching conversation for contact:`, contactId);
+
+      // Buscar conversaciones del contacto
+      const response = await axios.get(
+        `${this.apiUrl}/conversations/search`,
+        {
+          params: {
+            locationId: locationId,
+            contactId: contactId
+          },
+          headers: {
+            'Authorization': `Bearer ${accessToken || this.accessToken}`,
+            'Version': '2021-04-15' // Como tu N8N
+          }
+        }
+      );
+
+      // Si existe conversación, usar la primera
+      if (response.data.conversations && response.data.conversations.length > 0) {
+        const conversationId = response.data.conversations[0].id;
+        console.log(`✅ Found existing conversation:`, conversationId);
+        return { conversationId, isNew: false };
+      }
+
+      // Si no existe, crear una nueva conversación
+      console.log(`🆕 Creating new conversation for contact:`, contactId);
+      const newConversation = await this.createConversation(contactId, "Nueva conversación WhatsApp");
+      
+      return { 
+        conversationId: newConversation.conversation.id, 
+        isNew: true 
+      };
+
+    } catch (error) {
+      console.error('❌ Error finding/creating conversation:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  // ENVIAR MENSAJE INBOUND - Con conversationId automático
+  async sendInboundMessage(locationId, messageData, accessToken = null) {
+    try {
+      // Si no hay conversationId, buscarlo/crearlo
+      let conversationId = messageData.conversationId;
+      
+      console.log(`🔍 Checking conversationId:`, conversationId);
+      console.log(`📨 MessageData:`, messageData);
+      
+      if (!conversationId) {
+        console.log(`🚀 No conversationId provided, searching/creating...`);
+        const conversationResult = await this.findOrCreateConversation(
+          locationId, 
+          messageData.contactId, 
+          accessToken
+        );
+        conversationId = conversationResult.conversationId;
+        console.log(`🎯 Using conversation:`, conversationId);
+      } else {
+        console.log(`✅ Using provided conversationId:`, conversationId);
+      }
+
+      const payload = {
+        type: 'SMS',
+        contactId: messageData.contactId,
+        conversationId: conversationId,
+        locationId: locationId,
+        message: messageData.message || 'Mensaje desde WhatsApp'
+      };
+
+      // Solo incluir attachments si hay alguno (GHL requiere al menos 1)
+      if (messageData.attachments && messageData.attachments.length > 0) {
+        payload.attachments = messageData.attachments;
+      }
+
+      console.log(`🔄 GHL Inbound Message:`, {
+        contactId: payload.contactId,
+        conversationId: payload.conversationId,
+        messageLength: payload.message.length,
+        attachments: payload.attachments ? payload.attachments.length : 0
+      });
+
+      const response = await axios.post(
+        `${this.apiUrl}/conversations/messages/inbound`,
+        payload,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken || this.accessToken}`,
+            'Content-Type': 'application/json',
+            'Version': '2021-07-28'
+          }
+        }
+      );
+
+      console.log(`✅ Inbound message sent:`, response.data.conversationId);
+      return response.data;
+
+    } catch (error) {
+      console.error('❌ Error sending inbound message:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
   async getOrCreateContact(phone, additionalInfo = {}) {
     try {
       // First, search for existing contact

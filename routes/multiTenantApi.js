@@ -3,13 +3,14 @@
 const express = require('express');
 const router = express.Router();
 const multiTenantService = require('../services/multiTenantService');
-const db = require('../config/database');
+const db = require('../config/database-sqlite');
+const evolutionService = require('../services/evolutionService');
 
 // ================================
 // RUTAS DE REGISTRO Y AUTENTICACIÓN
 // ================================
 
-// Webhook para instalación GHL App
+// Webhook para instalación GHL App - MARKETPLACE AUTOMATION
 router.post('/ghl/install', async (req, res) => {
     try {
         console.log('📦 GHL App Installation received:', req.body);
@@ -19,25 +20,84 @@ router.post('/ghl/install', async (req, res) => {
             companyName, 
             accessToken, 
             refreshToken, 
-            scopes 
+            scopes,
+            userType,
+            userId
         } = req.body;
 
-        const result = await multiTenantService.registerGHLInstallation({
+        // STEP 1: Registrar instalación en base de datos
+        const installation = await multiTenantService.registerGHLInstallation({
             locationId,
             companyName,
             accessToken,
             refreshToken,
-            scopes
+            scopes,
+            userType,
+            userId
         });
+
+        console.log('✅ Installation registered:', installation.locationId);
+
+        // STEP 2: Crear automáticamente 5 instancias WhatsApp para el cliente
+        const evolutionService = require('../services/evolutionService');
+        console.log('🚀 Creating WhatsApp instances for new client...');
+        
+        const instancesResult = await evolutionService.createClientInstances(locationId, 5);
+        
+        // STEP 3: Registrar instancias en base de datos
+        const db = require('../config/database-sqlite');
+        for (const instance of instancesResult.instances) {
+            await db.query(
+                `INSERT OR REPLACE INTO whatsapp_instances 
+                (location_id, instance_name, position, status, webhook_url, created_at) 
+                VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+                [
+                    locationId,
+                    instance.instanceName,
+                    instance.position,
+                    'inactive',
+                    instance.webhookUrl
+                ]
+            );
+        }
+
+        console.log(`🎯 Marketplace installation complete for ${locationId}:`);
+        console.log(`   - Company: ${companyName}`);
+        console.log(`   - Instances created: ${instancesResult.totalCreated}/5`);
+        console.log(`   - Database: Updated`);
+        console.log(`   - Ready for client setup!`);
 
         res.json({ 
             success: true, 
-            message: 'GHL App installed successfully',
-            locationId: result.locationId
+            message: 'GHL App installed successfully - WhatsApp instances ready!',
+            locationId: installation.locationId,
+            instances: {
+                total: instancesResult.totalCreated,
+                created: instancesResult.instances.length,
+                ready: true
+            },
+            nextSteps: {
+                dashboard: `${process.env.APP_URL}/dashboard/${locationId}`,
+                setup: 'Client can now scan QR codes to connect WhatsApp'
+            }
         });
+
     } catch (error) {
-        console.error('Error installing GHL app:', error);
-        res.status(500).json({ error: error.message });
+        console.error('❌ Error during marketplace installation:', error);
+        
+        // Log error for debugging
+        console.error('Installation failed for:', {
+            locationId: req.body?.locationId,
+            company: req.body?.companyName,
+            error: error.message
+        });
+
+        res.status(500).json({ 
+            success: false,
+            error: error.message,
+            message: 'Installation failed - please contact support',
+            locationId: req.body?.locationId
+        });
     }
 });
 
@@ -74,29 +134,11 @@ router.post('/clients/login', async (req, res) => {
     try {
         const { locationId } = req.body;
 
-        const [client] = await db.query(
-            `SELECT c.*, g.company_name 
-            FROM clients c 
-            JOIN ghl_installations g ON c.location_id = g.location_id
-            WHERE c.location_id = ? AND c.is_active = true`,
-            [locationId]
-        );
-
-        if (!client.length) {
-            return res.status(404).json({ 
-                error: 'Client not found. Please register first.' 
-            });
-        }
-
-        // Actualizar último login
-        await db.query(
-            'UPDATE clients SET last_login = NOW() WHERE location_id = ?',
-            [locationId]
-        );
+        const client = await db.loginClient(locationId);
 
         res.json({
             success: true,
-            client: client[0]
+            client
         });
     } catch (error) {
         console.error('Error during login:', error);
@@ -191,33 +233,130 @@ router.get('/instances/:locationId/:position/status', async (req, res) => {
 // WEBHOOK ÚNICO PARA EVOLUTION API
 // ================================
 
-// Webhook único con variables de identificación
+// Webhook único para Evolution API con flujo completo GHL
 router.post('/webhook/messages', async (req, res) => {
     try {
-        const { location, instance } = req.query;
+        const { location } = req.query;
+        const webhookData = req.body;
         
-        if (!location || !instance) {
-            return res.status(400).json({ 
-                error: 'Location and instance parameters required' 
-            });
-        }
-
-        console.log(`📨 Webhook received for ${location}_wa_${instance}:`, {
-            event: req.body.event,
+        console.log(`📨 Evolution Webhook received:`, {
+            event: webhookData.event,
+            instance: webhookData.instance,
+            location: location,
             timestamp: new Date().toISOString()
         });
 
-        // Procesar webhook asincrónicamente
-        multiTenantService.processEvolutionWebhook(location, instance, req.body)
-            .catch(error => {
-                console.error('Error processing webhook async:', error);
-            });
+        // STEP 1: Filter - Validar formato Evolution (como tu N8N)
+        const isValidMessage = webhookData.event === 'messages.upsert' && 
+                             webhookData.data && 
+                             webhookData.data.key && 
+                             webhookData.data.key.fromMe === false;
 
-        // Responder inmediatamente para no bloquear Evolution
-        res.json({ success: true, received: true });
+        if (!isValidMessage) {
+            console.log('❌ Webhook filtered out - not a valid incoming message');
+            return res.json({ success: true, filtered: true, reason: 'Not an incoming message' });
+        }
+
+        // STEP 2: Code - Extraer información del mensaje (como tu N8N)
+        const data = webhookData.data;
+        const nombre = data.pushName || 'Unknown';
+        const numeroFormateado = data.key.remoteJid.split('@')[0];
+        
+        // Verificar si tiene adjunto
+        const tieneAdjunto = data.messageType !== 'conversation' && data.messageType !== 'extendedTextMessage';
+        
+        let mensaje = '';
+        let adjunto = {};
+        
+        // Lógica para extraer mensaje/adjunto (exacto como tu N8N)
+        if (tieneAdjunto) {
+            const tipoAdjunto = data.messageType;
+            const infoAdjunto = data.message[tipoAdjunto];
+            
+            if (infoAdjunto) {
+                adjunto = {
+                    tipo: tipoAdjunto,
+                    url: infoAdjunto.url || null,
+                    mimetype: infoAdjunto.mimetype || null
+                };
+                mensaje = infoAdjunto.caption || '';
+            }
+        } else {
+            mensaje = data.message.conversation || '';
+        }
+
+        // STEP 3: Obtener location_id del instance name (instance name = location_id)
+        const locationId = webhookData.instance; // El instance name ES el location_id
+
+        console.log(`📋 Processed message data:`, {
+            nombre,
+            telefono: numeroFormateado,
+            mensaje,
+            tieneAdjunto,
+            locationId
+        });
+
+        // STEP 4: Crear contacto en GHL usando el servicio (como tu N8N)
+        const ghlService = require('../services/ghlService');
+        
+        const contact = await ghlService.upsertContact(locationId, {
+            phone: `+${numeroFormateado}`,
+            firstName: nombre
+        });
+
+        console.log(`✅ Contact created in GHL:`, contact.contact?.id);
+
+        // STEP 5: Enviar mensaje como inbound a GHL (como tu N8N)
+        const messageResult = await ghlService.sendInboundMessage(locationId, {
+            contactId: contact.contact.id,
+            message: mensaje || 'Mensaje sin texto',
+            attachments: tieneAdjunto ? [{
+                url: adjunto.url,
+                type: adjunto.tipo === 'imageMessage' ? 'image' : 
+                      adjunto.tipo === 'documentMessage' ? 'document' :
+                      adjunto.tipo === 'audioMessage' ? 'audio' : 'other',
+                name: `archivo.${adjunto.mimetype?.split('/')[1] || 'bin'}`
+            }] : []
+        });
+
+        console.log(`✅ Message sent to GHL conversation`);
+
+        // STEP 6: Log en base de datos
+        await db.logMessage(locationId, webhookData.instance, {
+            messageId: data.key.id,
+            fromNumber: numeroFormateado,
+            messageContent: mensaje,
+            direction: 'inbound',
+            ghlContactId: contact.contact.id,
+            ghlConversationId: messageResult.conversationId
+        });
+
+        // STEP 7: Actualizar estadísticas
+        await db.incrementStatistic(locationId, 'messages_received');
+
+        // STEP 8: Respuesta exitosa
+        res.json({
+            success: true,
+            message: 'Mensaje procesado correctamente',
+            contactId: contact.contact.id,
+            conversationId: messageResult.conversationId,
+            timestamp: new Date().toISOString()
+        });
+
     } catch (error) {
-        console.error('Error in webhook handler:', error);
-        res.status(500).json({ error: error.message });
+        console.error('❌ Error processing Evolution webhook:', error);
+        
+        // Log del error
+        const locationId = req.query.location || req.body?.instance || 'unknown';
+        
+        // Respuesta de error (como tu N8N)
+        res.status(500).json({
+            success: false,
+            message: 'Error procesando webhook Evolution',
+            error: error.message,
+            timestamp: new Date().toISOString(),
+            instance: req.body?.instance || 'unknown'
+        });
     }
 });
 
@@ -385,7 +524,7 @@ router.get('/admin/stats', async (req, res) => {
                 COUNT(DISTINCT c.location_id) as total_clients,
                 COUNT(wi.id) as total_instances,
                 COUNT(CASE WHEN wi.status = 'connected' THEN 1 END) as connected_instances,
-                COUNT(CASE WHEN DATE(ml.processed_at) = CURDATE() THEN 1 END) as messages_today
+                COUNT(CASE WHEN DATE(ml.processed_at) = DATE('now') THEN 1 END) as messages_today
             FROM clients c
             LEFT JOIN whatsapp_instances wi ON c.location_id = wi.location_id
             LEFT JOIN message_logs ml ON c.location_id = ml.location_id
@@ -402,14 +541,139 @@ router.get('/admin/stats', async (req, res) => {
 });
 
 // ================================
+// TESTING Y DEVELOPMENT
+// ================================
+
+// Endpoint para probar instalación completa (DEVELOPMENT ONLY)
+router.post('/test/install', async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(403).json({ error: 'Test endpoints disabled in production' });
+    }
+
+    try {
+        const testLocationId = `TEST_${Date.now()}`;
+        const testInstallation = {
+            locationId: testLocationId,
+            companyName: 'Test Company Ltd',
+            accessToken: 'test_access_token_' + Date.now(),
+            refreshToken: 'test_refresh_token_' + Date.now(),
+            scopes: ['contacts.write', 'conversations.write'],
+            userType: 'location',
+            userId: 'test_user_' + Date.now()
+        };
+
+        console.log('🧪 Testing marketplace installation flow...');
+
+        // Simular instalación completa
+        const response = await fetch(`http://localhost:${process.env.PORT || 3000}/api/ghl/install`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(testInstallation)
+        });
+
+        const result = await response.json();
+
+        res.json({
+            success: true,
+            message: 'Test installation completed',
+            testData: testInstallation,
+            result: result,
+            dashboardUrl: `http://localhost:${process.env.PORT || 3000}/dashboard/${testLocationId}`
+        });
+
+    } catch (error) {
+        console.error('❌ Test installation failed:', error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message,
+            message: 'Test installation failed'
+        });
+    }
+});
+
+// Status completo del sistema
+router.get('/system/status', async (req, res) => {
+    try {
+        const evolutionService = require('../services/evolutionService');
+        const db = require('../config/database-sqlite');
+
+        // Verificar conexiones
+        const evolutionStatus = evolutionService.isConnected();
+        
+        // Contar clientes y instancias
+        const [clientsCount] = await db.query('SELECT COUNT(*) as count FROM clients');
+        const [instancesCount] = await db.query('SELECT COUNT(*) as count FROM whatsapp_instances');
+        const [connectionsCount] = await db.query("SELECT COUNT(*) as count FROM whatsapp_instances WHERE status = 'connected'");
+
+        res.json({
+            system: {
+                status: 'operational',
+                timestamp: new Date().toISOString(),
+                version: '1.0.0'
+            },
+            services: {
+                evolution_api: {
+                    connected: evolutionStatus,
+                    url: process.env.EVOLUTION_API_URL
+                },
+                database: {
+                    connected: true,
+                    clients: clientsCount[0].count,
+                    instances: instancesCount[0].count,
+                    active_connections: connectionsCount[0].count
+                }
+            },
+            environment: {
+                node_env: process.env.NODE_ENV || 'development',
+                port: process.env.PORT || 3000,
+                app_url: process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ System status error:', error);
+        res.status(500).json({
+            system: {
+                status: 'error',
+                error: error.message
+            }
+        });
+    }
+});
+
+// ================================
 // HEALTH CHECK
 // ================================
+
+// TEST ENDPOINT - Simple instance creation
+router.post('/test/simple-create', async (req, res) => {
+    try {
+        const { instanceName = 'simple_test_123' } = req.body;
+        
+        console.log('🧪 Testing simple instance creation:', instanceName);
+        const result = await evolutionService.createInstance(instanceName);
+        
+        res.json({
+            success: true,
+            result
+        });
+    } catch (error) {
+        console.error('❌ Test creation failed:', error.message);
+        res.status(500).json({
+            error: error.message,
+            details: error.response?.data
+        });
+    }
+});
 
 router.get('/health', (req, res) => {
     res.json({ 
         status: 'healthy', 
         timestamp: new Date().toISOString(),
-        service: 'multi-tenant-api'
+        service: 'multi-tenant-api',
+        version: '1.0.0'
     });
 });
 
