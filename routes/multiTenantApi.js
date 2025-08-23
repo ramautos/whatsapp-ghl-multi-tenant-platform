@@ -237,7 +237,6 @@ router.get('/instances/:locationId/:position/status', async (req, res) => {
 // 
 // Este flujo se mantiene en N8N como estaba configurado originalmente.
 // Mi plataforma solo maneja la creación y gestión de instancias WhatsApp.
-});
 
 // ================================
 // ESTADÍSTICAS Y REPORTES
