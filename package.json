@@ -8,7 +8,17 @@
     "dev": "nodemon server-multitenant.js",
     "test": "node test-webhook-evolution.js",
     "setup": "node setup-config.js",
-    "migrate": "node scripts/run-migrations.js"
+    "migrate": "node scripts/run-migrations.js",
+    "tools": "bash dev-tools.sh",
+    "power": "echo '🔥 POWER MODE - Abriendo todas las herramientas...' && node server-multitenant.js & sleep 2 && open http://localhost:3000 && open https://whatsapp.cloude.es",
+    "verify": "bash verify-production.sh",
+    "dashboard": "open http://localhost:3000",
+    "production": "open https://whatsapp.cloude.es",
+    "check": "bash verify-production.sh",
+    "deploy": "git add . && git commit -m 'Quick update' && git push",
+    "status": "git status",
+    "logs": "tail -f server.log",
+    "server": "node server-multitenant.js"
   },
   "dependencies": {
     "axios": "^1.6.0",

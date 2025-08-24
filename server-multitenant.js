@@ -10,9 +10,12 @@ require('dotenv').config();
 // Servicios
 const multiTenantService = require('./services/multiTenantService');
 const evolutionService = require('./services/evolutionService');
+const reconnectionService = require('./services/reconnectionService');
 
 // Rutas
 const multiTenantApi = require('./routes/multiTenantApi');
+const webhookHandler = require('./routes/webhookHandler');
+const exportRoutes = require('./routes/exportRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -54,6 +57,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ================================
 
 app.use('/api', multiTenantApi);
+app.use('/webhook', webhookHandler);
+app.use('/export', exportRoutes);
 
 // ================================
 // RUTAS DE PÁGINAS
@@ -96,6 +101,11 @@ app.get('/settings', (req, res) => {
 
 // Panel de administración
 app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
+});
+
+// Panel de administración alternativo (viejo)
+app.get('/admin-old', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
@@ -133,6 +143,40 @@ evolutionService.on('qr-code', (data) => {
         position,
         qrCode: data.qrCode,
         instanceName: data.instanceName
+    });
+});
+
+// Escuchar eventos del servicio de reconexión
+reconnectionService.on('reconnection-attempt', (data) => {
+    console.log(`🔄 Reconnection attempt for ${data.instance}: ${data.attempt}/${data.maxRetries}`);
+    
+    const locationId = data.instance.split('_')[0];
+    io.to(`location_${locationId}`).emit('reconnection_attempt', {
+        instance: data.instance,
+        attempt: data.attempt,
+        maxRetries: data.maxRetries,
+        timestamp: new Date().toISOString()
+    });
+});
+
+reconnectionService.on('reconnection-success', (data) => {
+    console.log(`✅ Reconnection successful for ${data.instance}`);
+    
+    io.to(`location_${data.locationId}`).emit('reconnection_success', {
+        instance: data.instance,
+        locationId: data.locationId,
+        timestamp: new Date().toISOString()
+    });
+});
+
+reconnectionService.on('instance-failed', (data) => {
+    console.log(`❌ Instance failed: ${data.instance}`);
+    
+    io.to(`location_${data.locationId}`).emit('instance_failed', {
+        instance: data.instance,
+        locationId: data.locationId,
+        reason: data.reason,
+        timestamp: new Date().toISOString()
     });
 });
 
@@ -238,6 +282,10 @@ async function startServer() {
         const db = require('./config/database-sqlite');
         await db.initialize();
         console.log('✅ Database connection verified');
+
+        // Inicializar servicio de reconexión
+        reconnectionService.initialize();
+        console.log('✅ Auto-reconnection service initialized');
 
         // Iniciar servidor
         const PORT = process.env.PORT || 3000;

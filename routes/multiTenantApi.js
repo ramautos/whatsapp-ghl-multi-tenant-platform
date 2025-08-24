@@ -497,24 +497,76 @@ router.get('/admin/clients', async (req, res) => {
 // Estadísticas globales del sistema
 router.get('/admin/stats', async (req, res) => {
     try {
-        const [stats] = await db.query(`
+        // Estadísticas principales
+        const [mainStats] = await db.query(`
             SELECT 
                 COUNT(DISTINCT c.location_id) as total_clients,
                 COUNT(wi.id) as total_instances,
                 COUNT(CASE WHEN wi.status = 'connected' THEN 1 END) as connected_instances,
-                COUNT(CASE WHEN DATE(ml.processed_at) = DATE('now') THEN 1 END) as messages_today
+                COUNT(CASE WHEN wi.status = 'open' THEN 1 END) as open_instances
             FROM clients c
             LEFT JOIN whatsapp_instances wi ON c.location_id = wi.location_id
-            LEFT JOIN message_logs ml ON c.location_id = ml.location_id
         `);
+
+        // Mensajes del día
+        const [messageStats] = await db.query(`
+            SELECT COUNT(*) as messages_today
+            FROM message_logs
+            WHERE DATE(processed_at) = DATE('now')
+        `);
+
+        // Nuevos clientes hoy
+        const [newClientsToday] = await db.query(`
+            SELECT COUNT(*) as new_clients_today
+            FROM clients
+            WHERE DATE(registered_at) = DATE('now')
+        `);
+
+        // Clientes activos últimas 24h
+        const [activeClients] = await db.query(`
+            SELECT COUNT(DISTINCT location_id) as active_clients_24h
+            FROM message_logs
+            WHERE processed_at >= datetime('now', '-24 hours')
+        `);
+
+        // Combinar estadísticas
+        const combinedStats = {
+            ...mainStats[0],
+            messages_today: messageStats[0]?.messages_today || 0,
+            new_clients_today: newClientsToday[0]?.new_clients_today || 0,
+            active_clients_24h: activeClients[0]?.active_clients_24h || 0,
+            // Calcular estadísticas adicionales
+            connection_rate: mainStats[0].total_instances > 0 
+                ? Math.round(((mainStats[0].connected_instances + mainStats[0].open_instances) / mainStats[0].total_instances) * 100)
+                : 0,
+            avg_instances_per_client: mainStats[0].total_clients > 0
+                ? Math.round(mainStats[0].total_instances / mainStats[0].total_clients)
+                : 0
+        };
 
         res.json({
             success: true,
-            stats: stats[0]
+            stats: combinedStats,
+            timestamp: new Date().toISOString()
         });
     } catch (error) {
         console.error('Error getting admin stats:', error);
-        res.status(500).json({ error: error.message });
+        // Devolver estadísticas vacías en lugar de error
+        res.json({
+            success: true,
+            stats: {
+                total_clients: 0,
+                total_instances: 0,
+                connected_instances: 0,
+                open_instances: 0,
+                messages_today: 0,
+                new_clients_today: 0,
+                active_clients_24h: 0,
+                connection_rate: 0,
+                avg_instances_per_client: 0
+            },
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Stats unavailable'
+        });
     }
 });
 

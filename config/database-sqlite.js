@@ -82,6 +82,10 @@ class SQLiteDatabaseService {
                 connected_at DATETIME,
                 disconnected_at DATETIME,
                 last_activity DATETIME,
+                last_seen DATETIME,
+                reconnection_attempts INTEGER DEFAULT 0,
+                last_reconnection DATETIME,
+                failure_reason TEXT,
                 FOREIGN KEY (location_id) REFERENCES clients(location_id),
                 UNIQUE(location_id, position)
             )`,
@@ -135,6 +139,42 @@ class SQLiteDatabaseService {
             this.db.run(schema, (err) => {
                 if (err) {
                     console.error('Error creating table:', err);
+                }
+            });
+        });
+
+        // Ejecutar migraciones para columnas faltantes
+        this.runMigrations();
+    }
+
+    runMigrations() {
+        // Migraciones para columnas faltantes
+        const migrations = [
+            // Agregar columnas faltantes a whatsapp_instances
+            'ALTER TABLE whatsapp_instances ADD COLUMN last_seen DATETIME',
+            'ALTER TABLE whatsapp_instances ADD COLUMN reconnection_attempts INTEGER DEFAULT 0',
+            'ALTER TABLE whatsapp_instances ADD COLUMN last_reconnection DATETIME',
+            'ALTER TABLE whatsapp_instances ADD COLUMN failure_reason TEXT',
+            
+            // Agregar columnas faltantes a message_logs
+            'ALTER TABLE message_logs ADD COLUMN from_name TEXT',
+            'ALTER TABLE message_logs ADD COLUMN content TEXT',
+            'ALTER TABLE message_logs ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP',
+            
+            // Crear tabla system_metrics si no existe
+            `CREATE TABLE IF NOT EXISTS system_metrics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                metric_name TEXT UNIQUE NOT NULL,
+                metric_value TEXT,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`
+        ];
+
+        migrations.forEach(migration => {
+            this.db.run(migration, (err) => {
+                if (err && !err.message.includes('duplicate column')) {
+                    // Ignorar errores de columnas duplicadas
+                    console.log('Migration note:', err.message);
                 }
             });
         });

@@ -1,0 +1,26 @@
+{
+  "metadata": {
+    "locationId": "TEST_1755998824753",
+    "clientName": null,
+    "dateRange": {},
+    "totalMessages": 1,
+    "includeMedia": false
+  },
+  "messages": [
+    {
+      "message_id": "test_message_123",
+      "location_id": "TEST_1755998824753",
+      "instance_name": "TEST_1755998824753_1",
+      "from_number": "521234567890@s.whatsapp.net",
+      "from_name": "Cliente Test",
+      "message_type": "text",
+      "content": "Hola, mensaje de prueba!",
+      "processed_at": "2025-08-24T01:28:59.000Z",
+      "direction": "inbound",
+      "status": "received",
+      "ghl_conversation_id": null,
+      "whatsapp_position": 1,
+      "client_name": null
+    }
+  ]
+}

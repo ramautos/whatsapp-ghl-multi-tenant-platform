@@ -18,6 +18,16 @@
 - **Uso**: Probar APIs Evolution + GHL sin salir de VS Code
 - **Beneficio**: Testing de `/api/instances/:locationId/:position/connect`
 
+### SQLTools
+- **ID**: `mtxr.sqltools`
+- **Uso**: Conectar directamente a SQLite database
+- **Beneficio**: Query directo a base de datos desde VS Code
+
+### SQLTools SQLite Driver
+- **ID**: `mtxr.sqltools-driver-sqlite`
+- **Uso**: Driver SQLite para SQLTools
+- **Beneficio**: Ejecutar queries SQL directamente
+
 ### SQLite Viewer
 - **ID**: `qwtel.sqlite-viewer` 
 - **Uso**: Ver base de datos `database/multitenant.db`

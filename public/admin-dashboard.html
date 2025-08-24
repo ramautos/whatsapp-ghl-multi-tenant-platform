@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - WhatsApp Business Platform</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 30px;
+        }
+
+        .header-stat {
+            text-align: center;
+        }
+
+        .header-stat-value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .header-stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+            text-transform: uppercase;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .stat-icon.green { background: #e8f5e8; color: #2e7d32; }
+        .stat-icon.blue { background: #e3f2fd; color: #1976d2; }
+        .stat-icon.orange { background: #fff3e0; color: #f57c00; }
+        .stat-icon.purple { background: #f3e5f5; color: #7b1fa2; }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            margin-top: 10px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .stat-change.positive {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .stat-change.negative {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .chart-period {
+            display: flex;
+            gap: 10px;
+        }
+
+        .period-btn {
+            padding: 6px 12px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .period-btn.active {
+            background: #25d366;
+            color: white;
+            border-color: #25d366;
+        }
+
+        .clients-table {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .search-box {
+            padding: 8px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            width: 250px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 500;
+            font-size: 14px;
+            color: #666;
+        }
+
+        td {
+            padding: 15px 12px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.connected {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .status-badge.disconnected {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .refresh-btn {
+            background: #25d366;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #20b358;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div>
+                <h1>🛡️ Panel Administrativo</h1>
+                <p style="opacity: 0.9; margin-top: 5px;">WhatsApp Business Multi-Tenant Platform</p>
+            </div>
+            <div class="header-stats">
+                <div class="header-stat">
+                    <div class="header-stat-value" id="totalClients">0</div>
+                    <div class="header-stat-label">Clientes Totales</div>
+                </div>
+                <div class="header-stat">
+                    <div class="header-stat-value" id="activeConnections">0</div>
+                    <div class="header-stat-label">Conexiones Activas</div>
+                </div>
+                <div class="header-stat">
+                    <div class="header-stat-value" id="todayMessages">0</div>
+                    <div class="header-stat-label">Mensajes Hoy</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Estadísticas Rápidas -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-value" id="totalInstances">0</div>
+                        <div class="stat-label">Instancias Totales</div>
+                    </div>
+                    <div class="stat-icon green">📱</div>
+                </div>
+                <div class="stat-change positive">+12% vs ayer</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-value" id="activeRate">0%</div>
+                        <div class="stat-label">Tasa de Actividad</div>
+                    </div>
+                    <div class="stat-icon blue">📊</div>
+                </div>
+                <div class="stat-change positive">+5% vs ayer</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-value" id="avgMessages">0</div>
+                        <div class="stat-label">Promedio Mensajes/Cliente</div>
+                    </div>
+                    <div class="stat-icon orange">💬</div>
+                </div>
+                <div class="stat-change positive">+18% vs ayer</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-value" id="newClientsToday">0</div>
+                        <div class="stat-label">Nuevos Clientes Hoy</div>
+                    </div>
+                    <div class="stat-icon purple">🆕</div>
+                </div>
+                <div class="stat-change positive">+2 nuevos</div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">📈 Mensajes por Día</h3>
+                    <div class="chart-period">
+                        <button class="period-btn active" onclick="updateChart('7d')">7 días</button>
+                        <button class="period-btn" onclick="updateChart('30d')">30 días</button>
+                    </div>
+                </div>
+                <canvas id="messagesChart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">🔗 Conexiones Activas</h3>
+                    <div class="chart-period">
+                        <button class="period-btn active" onclick="updateConnections('live')">Tiempo Real</button>
+                        <button class="period-btn" onclick="updateConnections('24h')">24h</button>
+                    </div>
+                </div>
+                <canvas id="connectionsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Tabla de Clientes -->
+        <div class="clients-table">
+            <div class="table-header">
+                <h3 class="table-title">👥 Clientes Activos</h3>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" class="search-box" placeholder="Buscar cliente..." id="searchClient">
+                    <button class="refresh-btn" onclick="exportFullSystem()">📊 Exportar Sistema</button>
+                    <button class="refresh-btn" onclick="loadClients()">🔄 Actualizar</button>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Location ID</th>
+                        <th>Empresa</th>
+                        <th>Instancias</th>
+                        <th>Estado</th>
+                        <th>Mensajes Hoy</th>
+                        <th>Última Actividad</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="clientsTableBody">
+                    <tr>
+                        <td colspan="7" class="loading">Cargando clientes...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Datos globales
+        let clients = [];
+        let messagesChart = null;
+        let connectionsChart = null;
+
+        // Inicializar al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardData();
+            initCharts();
+            loadClients();
+            
+            // Auto-refresh cada 30 segundos
+            setInterval(loadDashboardData, 30000);
+        });
+
+        async function loadDashboardData() {
+            try {
+                // Cargar estadísticas generales
+                const response = await fetch('/api/admin/stats');
+                const data = await response.json();
+
+                if (data.success) {
+                    const stats = data.stats;
+                    document.getElementById('totalClients').textContent = stats.total_clients || 0;
+                    document.getElementById('activeConnections').textContent = stats.connected_instances || 0;
+                    document.getElementById('todayMessages').textContent = stats.messages_today || 0;
+                    document.getElementById('totalInstances').textContent = stats.total_instances || 0;
+                    
+                    // Calcular tasa de actividad
+                    const activeRate = stats.total_instances > 0 
+                        ? Math.round((stats.connected_instances / stats.total_instances) * 100) 
+                        : 0;
+                    document.getElementById('activeRate').textContent = activeRate + '%';
+                    
+                    // Promedio de mensajes
+                    const avgMessages = stats.total_clients > 0 
+                        ? Math.round(stats.messages_today / stats.total_clients) 
+                        : 0;
+                    document.getElementById('avgMessages').textContent = avgMessages;
+                }
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        async function loadClients() {
+            try {
+                const response = await fetch('/api/admin/clients');
+                const data = await response.json();
+
+                if (data.success) {
+                    clients = data.clients;
+                    renderClientsTable(clients);
+                }
+            } catch (error) {
+                console.error('Error loading clients:', error);
+                document.getElementById('clientsTableBody').innerHTML = 
+                    '<tr><td colspan="7" class="loading">Error cargando clientes</td></tr>';
+            }
+        }
+
+        function renderClientsTable(clientsList) {
+            const tbody = document.getElementById('clientsTableBody');
+            
+            if (!clientsList || clientsList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="loading">No hay clientes registrados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = clientsList.map(client => `
+                <tr>
+                    <td><strong>${client.location_id}</strong></td>
+                    <td>${client.company_name || client.name || 'Sin nombre'}</td>
+                    <td>${client.total_instances || 0} / ${client.connected_instances || 0} activas</td>
+                    <td>
+                        <span class="status-badge ${client.connected_instances > 0 ? 'connected' : 'disconnected'}">
+                            ${client.connected_instances > 0 ? '🟢 Conectado' : '🔴 Desconectado'}
+                        </span>
+                    </td>
+                    <td>${client.messages_today || 0}</td>
+                    <td>${formatDate(client.last_activity || client.registered_at)}</td>
+                    <td>
+                        <button class="action-btn" onclick="viewClient('${client.location_id}')">Ver Dashboard</button>
+                        <button class="action-btn" onclick="exportClientData('${client.location_id}')">📄 Exportar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function viewClient(locationId) {
+            window.open(`/dashboard/${locationId}`, '_blank');
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Nunca';
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000 / 60); // minutos
+            
+            if (diff < 1) return 'Hace un momento';
+            if (diff < 60) return `Hace ${diff} min`;
+            if (diff < 1440) return `Hace ${Math.floor(diff/60)} horas`;
+            return date.toLocaleDateString();
+        }
+
+        function initCharts() {
+            // Gráfico de mensajes
+            const messagesCtx = document.getElementById('messagesChart').getContext('2d');
+            messagesChart = new Chart(messagesCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                    datasets: [{
+                        label: 'Mensajes',
+                        data: [450, 520, 480, 610, 580, 490, 520],
+                        borderColor: '#25d366',
+                        backgroundColor: 'rgba(37, 211, 102, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            // Gráfico de conexiones
+            const connectionsCtx = document.getElementById('connectionsChart').getContext('2d');
+            connectionsChart = new Chart(connectionsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Conectadas', 'Desconectadas', 'Pendientes'],
+                    datasets: [{
+                        data: [12, 3, 5],
+                        backgroundColor: ['#25d366', '#f44336', '#ff9800']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function updateChart(period) {
+            // Actualizar botones
+            event.target.parentElement.querySelectorAll('.period-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Actualizar datos del gráfico según el período
+            if (period === '30d') {
+                messagesChart.data.labels = Array.from({length: 30}, (_, i) => `Día ${i+1}`);
+                messagesChart.data.datasets[0].data = Array.from({length: 30}, () => 
+                    Math.floor(Math.random() * 600) + 400
+                );
+            } else {
+                messagesChart.data.labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+                messagesChart.data.datasets[0].data = [450, 520, 480, 610, 580, 490, 520];
+            }
+            messagesChart.update();
+        }
+
+        function updateConnections(view) {
+            // Actualizar botones
+            event.target.parentElement.querySelectorAll('.period-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Actualizar datos según la vista
+            loadDashboardData();
+        }
+
+        // Búsqueda de clientes
+        document.getElementById('searchClient').addEventListener('input', (e) => {
+            const search = e.target.value.toLowerCase();
+            const filtered = clients.filter(client => 
+                client.location_id.toLowerCase().includes(search) ||
+                (client.company_name && client.company_name.toLowerCase().includes(search)) ||
+                (client.name && client.name.toLowerCase().includes(search))
+            );
+            renderClientsTable(filtered);
+        });
+
+        // ================================
+        // FUNCIONES DE EXPORTACIÓN
+        // ================================
+
+        async function exportFullSystem() {
+            try {
+                const format = prompt('Formato de exportación (json/csv):', 'json');
+                if (!format || !['json', 'csv'].includes(format)) return;
+
+                const response = await fetch(`/export/admin/full-export?format=${format}`);
+                
+                if (response.ok) {
+                    // Crear enlace de descarga
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `platform_export_${new Date().toISOString().split('T')[0]}.${format}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    
+                    alert('✅ Exportación del sistema completada');
+                } else {
+                    alert('❌ Error en la exportación');
+                }
+            } catch (error) {
+                console.error('Error exporting system:', error);
+                alert('❌ Error en la exportación: ' + error.message);
+            }
+        }
+
+        async function exportClientData(locationId) {
+            try {
+                // Mostrar opciones de exportación
+                const exportType = prompt(`Exportar datos de ${locationId}:\n1. conversations - Conversaciones\n2. stats - Estadísticas\n\nEscribe 'conversations' o 'stats':`, 'conversations');
+                if (!exportType || !['conversations', 'stats'].includes(exportType)) return;
+
+                const format = prompt('Formato de exportación (json/csv/txt):', 'json');
+                if (!format || !['json', 'csv', 'txt'].includes(format)) return;
+
+                let url;
+                if (exportType === 'conversations') {
+                    // Opciones adicionales para conversaciones
+                    const days = prompt('Días a exportar (7, 30, 90):', '30');
+                    const fromDate = new Date();
+                    fromDate.setDate(fromDate.getDate() - parseInt(days || 30));
+                    
+                    url = `/export/conversations/${locationId}?format=${format}&from_date=${fromDate.toISOString().split('T')[0]}&limit=5000`;
+                } else {
+                    const days = prompt('Días de estadísticas (7, 30, 90):', '30');
+                    url = `/export/stats/${locationId}?format=${format}&days=${days || 30}`;
+                }
+
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    // Crear enlace de descarga
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = `${exportType}_${locationId}_${new Date().toISOString().split('T')[0]}.${format}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(downloadUrl);
+                    
+                    alert(`✅ Exportación de ${exportType} completada para ${locationId}`);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    alert(`❌ Error en la exportación: ${errorData.error || 'Error desconocido'}`);
+                }
+            } catch (error) {
+                console.error('Error exporting client data:', error);
+                alert('❌ Error en la exportación: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
