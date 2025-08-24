@@ -17,6 +17,9 @@ const multiTenantApi = require('./routes/multiTenantApi');
 const webhookHandler = require('./routes/webhookHandler');
 const exportRoutes = require('./routes/exportRoutes');
 const adminApi = require('./routes/adminApi');
+const ghlApi = require('./routes/ghlApi');
+const instancesApi = require('./routes/instancesApi');
+const webhookApi = require('./routes/webhookApi');
 
 const app = express();
 const server = http.createServer(app);
@@ -59,7 +62,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api', multiTenantApi);
 app.use('/api/admin', adminApi);
+app.use('/api/ghl', ghlApi);
+app.use('/api/instances', instancesApi);
 app.use('/webhook', webhookHandler);
+app.use('/webhook', webhookApi);
 app.use('/export', exportRoutes);
 
 // ================================
