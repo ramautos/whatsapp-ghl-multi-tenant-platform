@@ -88,11 +88,23 @@ async function processIncomingMessage(instanceName, message) {
 
         messageData.locationId = locationId;
 
-        // Guardar mensaje en base de datos
-        await saveMessageLog(messageData);
+        // Obtener número registrado de WhatsApp para esta instancia
+        const registeredWhatsAppNumber = await getRegisteredWhatsAppNumber(instanceName);
+        
+        // Agregar datos completos necesarios para N8N
+        const completeMessageData = {
+            ...messageData,
+            registeredWhatsAppNumber, // Número que scaneo el QR
+            senderNumber: extractPhoneNumber(messageData.from), // Número limpio que envía
+            locationId, // Location ID de GHL
+            timestamp: new Date().toISOString()
+        };
 
-        // Enviar a GoHighLevel
-        await forwardToGHL(messageData);
+        // ENVIAR A N8N (flujo principal)
+        await forwardToN8N(completeMessageData);
+
+        // Guardar mensaje en base de datos (para tracking)
+        await saveMessageLog(completeMessageData);
 
         // Actualizar estadísticas
         await updateMessageStats(locationId);
@@ -372,5 +384,146 @@ router.post('/evolution/connection', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// ================================
+// FUNCIONES PARA N8N Y NÚMEROS REGISTRADOS
+// ================================
+
+async function getRegisteredWhatsAppNumber(instanceName) {
+    try {
+        // Obtener el número de WhatsApp registrado para esta instancia
+        const [instance] = await db.query(`
+            SELECT phone_number 
+            FROM whatsapp_instances 
+            WHERE instance_name = ? AND phone_number IS NOT NULL
+        `, [instanceName]);
+
+        if (instance.length > 0 && instance[0].phone_number) {
+            return instance[0].phone_number;
+        }
+
+        // Si no hay número guardado, intentar obtenerlo de Evolution API
+        const evolutionService = require('../services/evolutionService');
+        const instanceInfo = await evolutionService.getInstanceStatus(instanceName);
+        
+        if (instanceInfo && instanceInfo.instance && instanceInfo.instance.owner) {
+            const phoneNumber = instanceInfo.instance.owner.replace('@s.whatsapp.net', '');
+            
+            // Guardar el número en la base de datos para futuras referencias
+            await db.query(`
+                UPDATE whatsapp_instances 
+                SET phone_number = ? 
+                WHERE instance_name = ?
+            `, [phoneNumber, instanceName]);
+            
+            return phoneNumber;
+        }
+
+        console.warn(`⚠️ No registered WhatsApp number found for instance: ${instanceName}`);
+        return null;
+    } catch (error) {
+        console.error('❌ Error getting registered WhatsApp number:', error);
+        return null;
+    }
+}
+
+function extractPhoneNumber(whatsappJid) {
+    // Extraer número limpio de formatos como: 521234567890@s.whatsapp.net
+    if (!whatsappJid) return null;
+    return whatsappJid.split('@')[0];
+}
+
+async function forwardToN8N(messageData) {
+    try {
+        console.log('🚀 Forwarding message to N8N...');
+
+        // Preparar payload completo para N8N
+        const n8nPayload = {
+            // Número que scaneo el QR (registrado en nuestra plataforma)
+            registered_whatsapp_number: messageData.registeredWhatsAppNumber,
+            
+            // Número que envía el mensaje (remitente)
+            sender_number: messageData.senderNumber,
+            sender_name: messageData.fromName,
+            
+            // Contenido del mensaje
+            message_content: messageData.content,
+            message_type: messageData.messageType,
+            
+            // Location ID de GHL
+            location_id: messageData.locationId,
+            
+            // Metadatos adicionales
+            timestamp: messageData.timestamp,
+            instance_name: messageData.instanceName,
+            message_id: messageData.messageId,
+            
+            // Información del sistema
+            platform: 'whatsapp-ghl-platform',
+            webhook_version: '1.0',
+            processed_at: new Date().toISOString()
+        };
+
+        console.log('📤 N8N Payload:', JSON.stringify(n8nPayload, null, 2));
+
+        // URL de N8N (ajustar según tu configuración)
+        const n8nWebhookUrl = `https://ray.cloude.es/webhook/evolution1?location=${messageData.locationId}&instance=${messageData.instanceName.split('_').pop()}`;
+        
+        // Enviar a N8N usando axios
+        const axios = require('axios');
+        const response = await axios.post(n8nWebhookUrl, n8nPayload, {
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'WhatsApp-GHL-Platform/1.0'
+            },
+            timeout: 10000 // 10 segundos timeout
+        });
+
+        if (response.status === 200) {
+            console.log('✅ Message forwarded to N8N successfully');
+            
+            // Log exitoso en base de datos
+            await db.query(`
+                INSERT INTO webhook_logs (
+                    location_id, instance_name, event_type, 
+                    payload, processed, target_system
+                ) VALUES (?, ?, ?, ?, ?, ?)
+            `, [
+                messageData.locationId, 
+                messageData.instanceName, 
+                'message_to_n8n',
+                JSON.stringify(n8nPayload), 
+                true, 
+                'n8n'
+            ]);
+            
+        } else {
+            console.warn('⚠️ N8N webhook returned non-200 status:', response.status);
+        }
+
+    } catch (error) {
+        console.error('❌ Error forwarding to N8N:', error.message);
+        
+        // Log error en base de datos
+        try {
+            await db.query(`
+                INSERT INTO webhook_logs (
+                    location_id, instance_name, event_type, 
+                    payload, processed, error_message, target_system
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            `, [
+                messageData.locationId || 'unknown', 
+                messageData.instanceName || 'unknown', 
+                'message_to_n8n_error',
+                JSON.stringify(messageData), 
+                false, 
+                error.message,
+                'n8n'
+            ]);
+        } catch (logError) {
+            console.error('❌ Error logging N8N error:', logError);
+        }
+    }
+}
 
 module.exports = router;

@@ -167,6 +167,19 @@ class SQLiteDatabaseService {
                 metric_name TEXT UNIQUE NOT NULL,
                 metric_value TEXT,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`,
+
+            // Crear tabla webhook_logs si no existe
+            `CREATE TABLE IF NOT EXISTS webhook_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                location_id TEXT,
+                instance_name TEXT,
+                event_type TEXT,
+                payload TEXT,
+                processed BOOLEAN DEFAULT 0,
+                error_message TEXT,
+                target_system TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )`
         ];
 
