@@ -27,6 +27,12 @@ router.post('/evolution/message', async (req, res) => {
 
         const { instance, data, event } = webhookData;
         
+        // Procesar eventos de conexión y mensajes
+        if (event === 'connection.update') {
+            await processConnectionUpdate(instance, data);
+            return res.json({ success: true, message: 'Connection update processed' });
+        }
+
         // Solo procesar mensajes entrantes
         if (event !== 'messages.upsert' || !data.messages) {
             console.log(`ℹ️ Ignoring event: ${event}`);
@@ -522,6 +528,79 @@ async function forwardToN8N(messageData) {
             ]);
         } catch (logError) {
             console.error('❌ Error logging N8N error:', logError);
+        }
+    }
+}
+
+/**
+ * Procesar eventos de conexión de WhatsApp
+ * Actualiza el número de teléfono cuando se conecta una instancia
+ */
+async function processConnectionUpdate(instanceName, connectionData) {
+    try {
+        console.log(`🔗 Processing connection update for instance: ${instanceName}`);
+        console.log('Connection data:', connectionData);
+
+        // Verificar si la conexión está activa y hay información del usuario
+        if (connectionData.state === 'open' && connectionData.user) {
+            const phoneNumber = connectionData.user.id || connectionData.user.jid;
+            const displayName = connectionData.user.name || 'Usuario';
+            
+            console.log(`📱 WhatsApp connected - Phone: ${phoneNumber}, Name: ${displayName}`);
+            
+            // Actualizar la base de datos con el número conectado
+            await db.query(`
+                UPDATE whatsapp_instances 
+                SET 
+                    status = 'connected',
+                    whatsapp_number = ?,
+                    display_name = ?,
+                    connected_at = datetime('now'),
+                    last_activity = datetime('now')
+                WHERE instance_name = ?
+            `, [phoneNumber, displayName, instanceName]);
+
+            console.log(`✅ Instance ${instanceName} updated with WhatsApp number: ${phoneNumber}`);
+
+            // También actualizar estadísticas globales
+            await db.query(`
+                INSERT OR REPLACE INTO system_metrics (metric_name, metric_value, updated_at) 
+                VALUES ('last_connection', ?, datetime('now'))
+            `, [phoneNumber]);
+
+        } else if (connectionData.state === 'close') {
+            console.log(`❌ WhatsApp disconnected for instance: ${instanceName}`);
+            
+            // Actualizar estado a desconectado
+            await db.query(`
+                UPDATE whatsapp_instances 
+                SET 
+                    status = 'disconnected',
+                    last_activity = datetime('now')
+                WHERE instance_name = ?
+            `, [instanceName]);
+        }
+
+    } catch (error) {
+        console.error('❌ Error processing connection update:', error);
+        
+        // Log del error
+        try {
+            await db.query(`
+                INSERT INTO webhook_logs (
+                    instance_name, event_type, payload, 
+                    processed, error_message, target_system
+                ) VALUES (?, ?, ?, ?, ?, ?)
+            `, [
+                instanceName,
+                'connection_update_error',
+                JSON.stringify(connectionData),
+                false,
+                error.message,
+                'database'
+            ]);
+        } catch (logError) {
+            console.error('❌ Error logging connection error:', logError);
         }
     }
 }

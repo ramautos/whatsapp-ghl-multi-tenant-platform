@@ -180,7 +180,11 @@ class SQLiteDatabaseService {
                 error_message TEXT,
                 target_system TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`
+            )`,
+            
+            // Agregar columnas para información de WhatsApp conectado
+            `ALTER TABLE whatsapp_instances ADD COLUMN whatsapp_number TEXT`,
+            `ALTER TABLE whatsapp_instances ADD COLUMN display_name TEXT`
         ];
 
         migrations.forEach(migration => {
