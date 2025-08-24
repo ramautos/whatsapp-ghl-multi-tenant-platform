@@ -311,15 +311,11 @@ class ReconnectionService extends EventEmitter {
         try {
             const healthRate = totalCount > 0 ? Math.round((healthyCount / totalCount) * 100) : 0;
             
-            await db.query(`
-                INSERT OR REPLACE INTO system_metrics (
-                    metric_name, metric_value, updated_at
-                ) VALUES 
-                ('healthy_instances', ?),
-                ('total_instances', ?),
-                ('health_rate', ?),
-                ('last_health_check', datetime('now'))
-            `, [healthyCount, totalCount, healthRate]);
+            // Insert metrics individually to avoid column count mismatch
+            await db.query(`INSERT OR REPLACE INTO system_metrics (metric_name, metric_value, updated_at) VALUES ('healthy_instances', ?, datetime('now'))`, [healthyCount]);
+            await db.query(`INSERT OR REPLACE INTO system_metrics (metric_name, metric_value, updated_at) VALUES ('total_instances', ?, datetime('now'))`, [totalCount]);
+            await db.query(`INSERT OR REPLACE INTO system_metrics (metric_name, metric_value, updated_at) VALUES ('health_rate', ?, datetime('now'))`, [healthRate]);
+            await db.query(`INSERT OR REPLACE INTO system_metrics (metric_name, metric_value, updated_at) VALUES ('last_health_check', ?, datetime('now'))`, [new Date().toISOString()]);
 
             this.lastHealthCheck = new Date();
         } catch (error) {

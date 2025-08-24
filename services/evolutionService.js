@@ -294,12 +294,16 @@ class EvolutionService extends EventEmitter {
           // Configurar webhook para N8N (mantener flujo existente del usuario)
           const webhookUrl = `https://ray.cloude.es/webhook/evolution1?location=${locationId}&instance=${i}`;
           
+          // Esperar 2 segundos para que la instancia esté completamente lista
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
           // Configurar webhook
           try {
             await this.setWebhook(instanceName, webhookUrl);
             console.log(`✅ Webhook configured for ${instanceName}`);
           } catch (webhookError) {
             console.warn(`⚠️ Webhook config failed for ${instanceName}:`, webhookError.message);
+            console.warn(`📋 Webhook will be configured later for ${instanceName}`);
           }
           
           instances.push({
