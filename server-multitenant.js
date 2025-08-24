@@ -59,8 +59,13 @@ app.use('/api', multiTenantApi);
 // RUTAS DE PÁGINAS
 // ================================
 
-// Página principal - Login/Register
+// Página principal - Login Simple
 app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login-simple.html'));
+});
+
+// Login alternativo (página original)
+app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 

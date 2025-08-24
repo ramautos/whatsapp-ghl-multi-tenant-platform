@@ -134,15 +134,81 @@ router.post('/clients/login', async (req, res) => {
     try {
         const { locationId } = req.body;
 
-        const client = await db.loginClient(locationId);
+        if (!locationId) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Location ID es requerido' 
+            });
+        }
 
-        res.json({
-            success: true,
-            client
-        });
+        try {
+            const client = await db.loginClient(locationId);
+            res.json({
+                success: true,
+                client,
+                message: 'Cliente encontrado',
+                hasAccount: true
+            });
+        } catch (error) {
+            // Si el cliente no existe, permitir acceso directo
+            res.json({
+                success: true,
+                client: {
+                    location_id: locationId,
+                    name: 'Usuario Directo',
+                    registered_at: new Date().toISOString()
+                },
+                message: 'Acceso directo autorizado',
+                hasAccount: false
+            });
+        }
     } catch (error) {
         console.error('Error during login:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ 
+            success: false,
+            error: error.message 
+        });
+    }
+});
+
+// Login Admin
+router.post('/admin/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        if (!username || !password) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Usuario y contraseña son requeridos' 
+            });
+        }
+
+        // Credenciales admin configurables
+        const adminUsername = process.env.ADMIN_USER || 'admin';
+        const adminPassword = process.env.ADMIN_PASS || 'cloude2024';
+
+        if (username === adminUsername && password === adminPassword) {
+            res.json({
+                success: true,
+                message: 'Acceso administrativo autorizado',
+                user: {
+                    username: adminUsername,
+                    role: 'admin',
+                    loginAt: new Date().toISOString()
+                }
+            });
+        } else {
+            res.status(401).json({
+                success: false,
+                error: 'Credenciales incorrectas'
+            });
+        }
+    } catch (error) {
+        console.error('Error during admin login:', error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message 
+        });
     }
 });
 

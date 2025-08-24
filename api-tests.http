@@ -1,0 +1,104 @@
+### 🚀 WHATSAPP-GHL PLATFORM API TESTING
+### Usar con Thunder Client o REST Client extension
+
+# Variables del entorno
+@baseUrl = http://localhost:3000
+@productionUrl = https://whatsapp.cloude.es
+@testLocationId = FINAL_PRODUCTION_TEST_1755992451
+@evolutionUrl = https://evolutionv2.cloude.es
+@evolutionApiKey = CwLLVHNynMyfeM7ePCyUgBr6EdOk3eRg
+
+### 1. Health Check - Verificar que el servidor funciona
+GET {{baseUrl}}/health
+
+### 2. System Status - Estado completo del sistema  
+GET {{baseUrl}}/api/system/status
+
+### 3. Conectar Instancia WhatsApp - Generar QR Code
+POST {{baseUrl}}/api/instances/{{testLocationId}}/1/connect
+Content-Type: application/json
+
+### 4. Obtener Instancias del Cliente
+GET {{baseUrl}}/api/instances/{{testLocationId}}
+
+### 5. Estadísticas del Cliente Hoy
+GET {{baseUrl}}/api/statistics/{{testLocationId}}/today
+
+### 6. Simulación Instalación GHL Marketplace
+POST {{baseUrl}}/api/ghl/install
+Content-Type: application/json
+
+{
+  "locationId": "TEST_{{$timestamp}}",
+  "companyName": "Test Company Ltd",
+  "accessToken": "test_access_token_{{$timestamp}}",
+  "refreshToken": "test_refresh_token_{{$timestamp}}",
+  "scopes": ["contacts.write", "conversations.write"],
+  "userType": "location",
+  "userId": "test_user_{{$timestamp}}"
+}
+
+### 7. Admin - Ver Todos los Clientes
+GET {{baseUrl}}/api/admin/clients
+
+### 8. Admin - Estadísticas Globales
+GET {{baseUrl}}/api/admin/stats
+
+### 9. Testing Evolution API Directo - Crear Instancia
+POST {{evolutionUrl}}/instance/create
+Content-Type: application/json
+apikey: {{evolutionApiKey}}
+
+{
+  "instanceName": "test_direct_{{$timestamp}}",
+  "integration": "WHATSAPP-BAILEYS"
+}
+
+### 10. Evolution API - Conectar Instancia (Generar QR)
+POST {{evolutionUrl}}/instance/connect/{{testLocationId}}_1
+Content-Type: application/json
+apikey: {{evolutionApiKey}}
+
+### 11. Testing Producción - Health Check
+GET {{productionUrl}}/health
+
+### 12. Testing Producción - Conectar Instancia  
+POST {{productionUrl}}/api/instances/{{testLocationId}}/1/connect
+Content-Type: application/json
+
+### 13. Login Cliente
+POST {{baseUrl}}/api/clients/login
+Content-Type: application/json
+
+{
+  "locationId": "{{testLocationId}}"
+}
+
+### 13.1 Login Admin
+POST {{baseUrl}}/api/admin/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "cloude2024"
+}
+
+### 13.2 Login Admin Incorrecto (para probar)
+POST {{baseUrl}}/api/admin/login
+Content-Type: application/json
+
+{
+  "username": "wrong",
+  "password": "wrong"
+}
+
+### 14. Registro Cliente Manual
+POST {{baseUrl}}/api/clients/register  
+Content-Type: application/json
+
+{
+  "locationId": "MANUAL_TEST_{{$timestamp}}",
+  "name": "Test Client",
+  "email": "test@example.com",
+  "phone": "+1234567890"
+}
