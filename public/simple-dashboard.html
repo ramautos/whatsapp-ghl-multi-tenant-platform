@@ -251,12 +251,19 @@
         }
 
         async function connectInstance(instanceName, index) {
-            const btn = document.getElementById(`btn-${index}`);
-            const qrContainer = document.getElementById(`qr-${index}`);
-            
-            btn.innerHTML = '<div class="loading"></div> Generando QR...';
-            
             try {
+                // Obtener el botón de manera segura
+                const btn = document.getElementById(`btn-${index}`);
+                const qrContainer = document.getElementById(`qr-${index}`);
+                
+                if (!btn) {
+                    console.error('Botón no encontrado:', `btn-${index}`);
+                    return;
+                }
+                
+                btn.innerHTML = '<div class="loading"></div> Generando QR...';
+                btn.disabled = true;
+                
                 const response = await fetch(`/api/instances/${locationId}/${index + 1}/connect`, {
                     method: 'POST'
                 });
@@ -264,21 +271,42 @@
                 const data = await response.json();
                 
                 if (data.success && data.qrCode) {
-                    qrContainer.innerHTML = `<img src="${data.qrCode}" alt="QR Code" class="qr-code">`;
+                    if (qrContainer) {
+                        qrContainer.innerHTML = `<img src="${data.qrCode}" alt="QR Code" class="qr-code">`;
+                    }
                     btn.innerHTML = '📱 Escanea el QR con WhatsApp';
+                    btn.disabled = false;
                 } else {
                     throw new Error(data.error || 'Error generando QR code');
                 }
             } catch (error) {
-                btn.innerHTML = '❌ Error - Reintentar';
+                console.error('Error conectando instancia:', error);
+                const btn = document.getElementById(`btn-${index}`);
+                if (btn) {
+                    btn.innerHTML = '❌ Error - Reintentar';
+                    btn.disabled = false;
+                }
                 showError(`Error conectando instancia: ${error.message}`);
+                // Recargar instancias para restaurar el estado
+                loadInstances();
             }
         }
 
         function showError(message) {
-            document.getElementById('errorContainer').innerHTML = `
-                <div class="error">${message}</div>
-            `;
+            const errorContainer = document.getElementById('errorContainer');
+            if (errorContainer) {
+                errorContainer.innerHTML = `
+                    <div class="error">${message}</div>
+                `;
+                // Auto hide error after 10 seconds
+                setTimeout(() => {
+                    if (errorContainer) {
+                        errorContainer.innerHTML = '';
+                    }
+                }, 10000);
+            } else {
+                console.error('Error:', message);
+            }
         }
 
         // Auto refresh every 30 seconds
