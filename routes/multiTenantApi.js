@@ -341,7 +341,7 @@ router.get('/instances/:locationId', authenticateApiKey, validateLocationId, asy
 });
 
 // Activar instancia (generar QR)
-router.post('/instances/:locationId/activate', authenticateApiKey, validateLocationId, async (req, res) => {
+router.post('/instances/:locationId/activate', validateLocationId, async (req, res) => {
     try {
         const { locationId } = req.params;
         const { position } = req.body;
@@ -362,22 +362,22 @@ router.post('/instances/:locationId/activate', authenticateApiKey, validateLocat
 });
 
 // Conectar instancia específica (nueva ruta simple)
-router.post('/instances/:locationId/:position/connect', authenticateApiKey, validateLocationId, async (req, res) => {
+router.post('/instances/:locationId/:position/connect', validateLocationId, async (req, res) => {
     try {
         const { locationId, position } = req.params;
-        const instanceName = `${locationId}_${position}`;
+        const instanceName = `${locationId}_wa_${position}`;
         
         console.log(`🔗 Connecting instance ${instanceName} for position ${position}`);
         
-        // Get QR code from Evolution API
-        const evolutionService = require('../services/evolutionService');
-        const qrCode = await evolutionService.connectInstance(instanceName);
+        // Use multiTenantService to activate instance properly
+        const result = await multiTenantService.activateInstance(locationId, position);
         
-        if (qrCode) {
+        if (result.success) {
             res.json({
                 success: true,
-                qrCode: qrCode,
-                instanceName: instanceName,
+                qrCode: result.qrCode,
+                instanceName: result.instanceName || instanceName,
+                position: result.position,
                 message: 'QR code generated successfully'
             });
         } else {

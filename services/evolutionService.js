@@ -70,16 +70,31 @@ class EvolutionService extends EventEmitter {
 
   async connectInstance(instanceName) {
     try {
+      // First, try to create the instance if it doesn't exist
+      console.log(`🔗 Attempting to connect instance: ${instanceName}`);
+      
+      // Try to create the instance first
+      try {
+        await this.createInstance(instanceName);
+        console.log(`✅ Instance ${instanceName} created successfully`);
+      } catch (createError) {
+        // Instance might already exist, continue with connection
+        console.log(`⚠️ Instance ${instanceName} might already exist, continuing...`);
+      }
+      
+      // Now try to get connection state which should include QR if needed
       const response = await axios.get(
-        `${this.apiUrl}/instance/connect/${instanceName}`,
+        `${this.apiUrl}/instance/connectionState/${instanceName}`,
         {
           headers: { 'apikey': this.apiKey }
         }
       );
 
-      if (response.data.base64) {
-        // Generate QR code
-        const qrCodeData = await QRCode.toDataURL(response.data.code);
+      console.log(`📱 QR Code updated: ${instanceName}`);
+
+      if (response.data && response.data.qrcode && response.data.qrcode.base64) {
+        // Return the base64 QR code directly
+        const qrCodeData = `data:image/png;base64,${response.data.qrcode.base64}`;
         
         // Update instance status
         const instance = this.instances.get(instanceName) || {};
@@ -91,9 +106,9 @@ class EvolutionService extends EventEmitter {
         this.emit('qr-code', { instanceName, qrCode: qrCodeData });
 
         return qrCodeData;
+      } else {
+        throw new Error('No QR code available - instance may already be connected');
       }
-
-      return null;
     } catch (error) {
       console.error('Error connecting instance:', error.message);
       throw error;
@@ -282,7 +297,7 @@ class EvolutionService extends EventEmitter {
     console.log(`🚀 Creating ${count} instances for client: ${locationId}`);
 
     for (let i = 1; i <= count; i++) {
-      const instanceName = `${locationId}_${i}`;
+      const instanceName = `${locationId}_wa_${i}`;
       
       try {
         console.log(`🔄 Creating instance ${i}/${count} for client ${locationId}`);
@@ -353,7 +368,7 @@ class EvolutionService extends EventEmitter {
     const instances = [];
     
     for (let i = 1; i <= 5; i++) {
-      const instanceName = `${locationId}_${i}`;
+      const instanceName = `${locationId}_wa_${i}`;
       
       try {
         const status = await this.getInstanceInfo(instanceName);
@@ -386,7 +401,7 @@ class EvolutionService extends EventEmitter {
     const results = [];
     
     for (let i = 1; i <= 5; i++) {
-      const instanceName = `${locationId}_${i}`;
+      const instanceName = `${locationId}_wa_${i}`;
       
       try {
         const result = await this.deleteInstance(instanceName);
