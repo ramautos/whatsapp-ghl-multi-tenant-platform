@@ -16,6 +16,7 @@ const reconnectionService = require('./services/reconnectionService');
 const multiTenantApi = require('./routes/multiTenantApi');
 const webhookHandler = require('./routes/webhookHandler');
 const exportRoutes = require('./routes/exportRoutes');
+const adminApi = require('./routes/adminApi');
 
 const app = express();
 const server = http.createServer(app);
@@ -57,6 +58,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ================================
 
 app.use('/api', multiTenantApi);
+app.use('/api/admin', adminApi);
 app.use('/webhook', webhookHandler);
 app.use('/export', exportRoutes);
 
@@ -102,6 +104,11 @@ app.get('/settings', (req, res) => {
 // Panel de administración
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
+});
+
+// Admin Super Control (NUEVO)
+app.get('/admin-super', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin-super.html'));
 });
 
 // Panel de administración alternativo (viejo)

@@ -268,21 +268,37 @@
         <h2 class="section-title">Paneles de Administración</h2>
         
         <div class="cards-grid">
-            <div class="admin-card" onclick="openAdminComplete()">
-                <i class="fas fa-cogs card-icon"></i>
-                <h3 class="card-title">Admin Center Completo</h3>
-                <p class="card-description">Panel de control principal con todas las funcionalidades integradas</p>
+            <div class="admin-card" onclick="openAdminSuper()">
+                <i class="fas fa-crown card-icon"></i>
+                <h3 class="card-title">🚀 Admin Super Control</h3>
+                <p class="card-description">Control total absoluto del sistema - Todas las funciones de administrador</p>
                 <ul class="card-features">
-                    <li>Dashboard de estadísticas en tiempo real</li>
-                    <li>Gestión completa de clientes</li>
-                    <li>Control de instancias WhatsApp</li>
-                    <li>Configuración de webhooks</li>
-                    <li>Herramientas de debugging</li>
-                    <li>Logs y monitoreo del sistema</li>
+                    <li>Creación manual de clientes e instancias</li>
+                    <li>Control directo de Evolution API</li>
+                    <li>Gestión completa de webhooks</li>
+                    <li>Limpieza y mantenimiento del sistema</li>
+                    <li>Logs en tiempo real y reportes</li>
+                    <li>Operaciones bulk y reset total</li>
                 </ul>
                 <button class="card-button">
-                    <i class="fas fa-rocket"></i>
-                    Acceder al Admin Center
+                    <i class="fas fa-crown"></i>
+                    Super Admin Control
+                </button>
+            </div>
+
+            <div class="admin-card" onclick="openAdminComplete()">
+                <i class="fas fa-cogs card-icon"></i>
+                <h3 class="card-title">Admin Center Clásico</h3>
+                <p class="card-description">Panel de control tradicional con funcionalidades básicas</p>
+                <ul class="card-features">
+                    <li>Dashboard de estadísticas</li>
+                    <li>Vista general del sistema</li>
+                    <li>Herramientas básicas de admin</li>
+                    <li>Interface simple y directa</li>
+                </ul>
+                <button class="card-button">
+                    <i class="fas fa-tools"></i>
+                    Admin Clásico
                 </button>
             </div>
 
@@ -370,6 +386,10 @@
         // Funciones para navegación
         function openAdminComplete() {
             window.open('/admin-complete', '_blank');
+        }
+
+        function openAdminSuper() {
+            window.open('/admin-super', '_blank');
         }
 
         function openOriginalAdmin() {
