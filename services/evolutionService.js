@@ -70,43 +70,36 @@ class EvolutionService extends EventEmitter {
 
   async connectInstance(instanceName) {
     try {
-      // First, try to create the instance if it doesn't exist
       console.log(`🔗 Attempting to connect instance: ${instanceName}`);
       
-      // Try to create the instance first
-      try {
-        await this.createInstance(instanceName);
-        console.log(`✅ Instance ${instanceName} created successfully`);
-      } catch (createError) {
-        // Instance might already exist, continue with connection
-        console.log(`⚠️ Instance ${instanceName} might already exist, continuing...`);
-      }
-      
-      // Now try to get connection state which should include QR if needed
+      // Use correct Evolution API endpoint for QR code generation
       const response = await axios.get(
-        `${this.apiUrl}/instance/connectionState/${instanceName}`,
+        `${this.apiUrl}/instance/connect/${instanceName}`,
         {
           headers: { 'apikey': this.apiKey }
         }
       );
 
-      console.log(`📱 QR Code updated: ${instanceName}`);
+      console.log(`📱 Response from Evolution API:`, response.data);
 
-      if (response.data && response.data.qrcode && response.data.qrcode.base64) {
-        // Return the base64 QR code directly
-        const qrCodeData = `data:image/png;base64,${response.data.qrcode.base64}`;
+      if (response.data && response.data.code) {
+        // According to Evolution API docs, QR code is in response.data.code
+        const qrCodeData = `data:image/png;base64,${response.data.code}`;
         
         // Update instance status
         const instance = this.instances.get(instanceName) || {};
         instance.status = 'connecting';
         instance.qrCode = qrCodeData;
+        instance.pairingCode = response.data.pairingCode;
         this.instances.set(instanceName, instance);
 
         // Emit QR code event
-        this.emit('qr-code', { instanceName, qrCode: qrCodeData });
+        this.emit('qr-code', { instanceName, qrCode: qrCodeData, pairingCode: response.data.pairingCode });
 
+        console.log(`✅ QR Code generated for ${instanceName}`);
         return qrCodeData;
       } else {
+        console.log(`❌ No QR code in response:`, response.data);
         throw new Error('No QR code available - instance may already be connected');
       }
     } catch (error) {

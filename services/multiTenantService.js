@@ -36,7 +36,8 @@ class MultiTenantService {
     // Activar instancia WhatsApp (generar QR)
     async activateInstance(locationId, position) {
         try {
-            const instanceName = `${locationId}_wa_${position}`;
+            const instanceName = `${locationId}_${position}`;
+            const evolutionInstanceName = `${locationId}_wa_${position}`;
             
             // Verificar que el slot existe y está inactivo
             const [instance] = await db.query(
@@ -49,17 +50,17 @@ class MultiTenantService {
                 throw new Error(`Slot ${position} not available or already active`);
             }
 
-            // Crear instancia en Evolution API
+            // Crear instancia en Evolution API con nombre correcto
             const webhookUrl = `${process.env.APP_URL}/webhook/messages?location=${locationId}&instance=${position}`;
             
-            const evolutionData = await evolutionService.createInstance(instanceName, {
+            const evolutionData = await evolutionService.createInstance(evolutionInstanceName, {
                 webhookUrl,
                 webhookByEvents: true,
                 webhookBase64: false
             });
 
             // Generar QR
-            const qrCode = await evolutionService.connectInstance(instanceName);
+            const qrCode = await evolutionService.connectInstance(evolutionInstanceName);
 
             // Actualizar en DB
             await db.query(
@@ -69,7 +70,7 @@ class MultiTenantService {
                     webhook_url = ?,
                     evolution_instance_id = ?
                 WHERE location_id = ? AND position = ?`,
-                [qrCode, webhookUrl, evolutionData.instance?.instanceName, locationId, position]
+                [qrCode, webhookUrl, evolutionInstanceName, locationId, position]
             );
 
             // Cachear en memoria
@@ -77,14 +78,16 @@ class MultiTenantService {
                 locationId,
                 position,
                 status: 'qr_pending',
-                qrCode
+                qrCode,
+                evolutionInstanceName
             });
 
-            console.log(`✅ Instance activated: ${instanceName}`);
+            console.log(`✅ Instance activated: ${instanceName} -> Evolution: ${evolutionInstanceName}`);
             return { 
                 success: true, 
                 qrCode,
                 instanceName,
+                evolutionInstanceName,
                 position 
             };
         } catch (error) {
@@ -96,7 +99,8 @@ class MultiTenantService {
     // Procesar webhook de Evolution
     async processEvolutionWebhook(locationId, instancePosition, data) {
         try {
-            const instanceName = `${locationId}_wa_${instancePosition}`;
+            const instanceName = `${locationId}_${instancePosition}`;
+            const evolutionInstanceName = `${locationId}_wa_${instancePosition}`;
             
             // Obtener credenciales GHL del cliente
             const [ghlCreds] = await db.query(
@@ -316,6 +320,162 @@ class MultiTenantService {
         );
 
         return stats[0];
+    }
+
+    // Sincronizar QR code desde Evolution API a base de datos
+    async syncQRCodeFromEvolution(locationId, position) {
+        try {
+            const instanceName = `${locationId}_${position}`;
+            const evolutionInstanceName = `${locationId}_wa_${position}`;
+
+            console.log(`🔄 Syncing QR code for ${instanceName} from Evolution API...`);
+
+            // Obtener QR code actual de Evolution API
+            let qrCode = null;
+            try {
+                qrCode = await evolutionService.connectInstance(evolutionInstanceName);
+                console.log(`✅ QR code obtained for ${instanceName}: ${qrCode ? 'Yes' : 'No'}`);
+            } catch (error) {
+                console.log(`⚠️ Error getting QR for ${instanceName}:`, error.message);
+                if (error.message.includes('already be connected') || error.message.includes('No QR code available')) {
+                    // Instancia ya conectada, obtener estado
+                    try {
+                        const status = await evolutionService.getInstanceStatus(evolutionInstanceName);
+                        if (status.state === 'open') {
+                            // Instancia conectada, actualizar BD
+                            await db.query(
+                                `UPDATE whatsapp_instances 
+                                SET status = 'connected', qr_code = NULL, connected_at = CURRENT_TIMESTAMP
+                                WHERE location_id = ? AND position = ?`,
+                                [locationId, position]
+                            );
+                            console.log(`✅ Instance ${instanceName} marked as connected in DB`);
+                            return { success: true, connected: true, qrCode: null };
+                        } else if (status.state === 'close') {
+                            // Instancia desconectada, intentar obtener QR nuevamente
+                            console.log(`🔄 Instance ${instanceName} is disconnected, trying to get QR again...`);
+                        }
+                    } catch (statusError) {
+                        console.warn(`⚠️ Could not get status for ${instanceName}:`, statusError.message);
+                    }
+                    return { success: false, error: 'Instance not available for QR' };
+                } else {
+                    throw error;
+                }
+            }
+
+            if (qrCode) {
+                // Actualizar QR code en BD
+                const result = await db.query(
+                    `UPDATE whatsapp_instances 
+                    SET status = 'qr_pending', qr_code = ?, evolution_instance_id = ?
+                    WHERE location_id = ? AND position = ?`,
+                    [qrCode, evolutionInstanceName, locationId, position]
+                );
+
+                console.log(`✅ QR code synced for ${instanceName} - DB rows affected: ${result.affectedRows}`);
+                console.log(`📱 QR code length: ${qrCode.length} characters`);
+                return { success: true, qrCode };
+            }
+
+            return { success: false, error: 'No QR code available' };
+        } catch (error) {
+            console.error(`❌ Error syncing QR code for ${locationId}_${position}:`, error);
+            throw error;
+        }
+    }
+
+    // Obtener todas las instancias con QR codes actualizados
+    async getInstancesWithFreshQR(locationId) {
+        try {
+            // Obtener instancias de BD
+            const [instances] = await db.query(
+                `SELECT * FROM whatsapp_instances WHERE location_id = ? ORDER BY position`,
+                [locationId]
+            );
+
+            if (!instances.length) {
+                return { success: false, error: 'No instances found' };
+            }
+
+            // Para cada instancia inactiva, intentar sincronizar QR
+            for (const instance of instances) {
+                if (instance.status === 'inactive' || instance.status === 'disconnected') {
+                    try {
+                        await this.syncQRCodeFromEvolution(locationId, instance.position);
+                    } catch (error) {
+                        console.warn(`⚠️ Failed to sync QR for instance ${instance.position}:`, error.message);
+                    }
+                }
+            }
+
+            // Obtener instancias actualizadas
+            const [updatedInstances] = await db.query(
+                `SELECT * FROM whatsapp_instances WHERE location_id = ? ORDER BY position`,
+                [locationId]
+            );
+
+            return {
+                success: true,
+                instances: updatedInstances,
+                locationId
+            };
+        } catch (error) {
+            console.error('Error getting instances with fresh QR:', error);
+            throw error;
+        }
+    }
+
+    // Forzar generación de nuevo QR code (eliminar y recrear instancia)
+    async forceNewQRCode(locationId, position) {
+        try {
+            const instanceName = `${locationId}_${position}`;
+            const evolutionInstanceName = `${locationId}_wa_${position}`;
+
+            console.log(`🆕 Forcing new QR code for ${instanceName}...`);
+
+            // 1. Eliminar instancia de Evolution API
+            try {
+                await evolutionService.deleteInstance(evolutionInstanceName);
+                console.log(`🗑️ Deleted Evolution instance: ${evolutionInstanceName}`);
+            } catch (error) {
+                console.warn(`⚠️ Could not delete Evolution instance: ${error.message}`);
+            }
+
+            // 2. Esperar un momento
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // 3. Crear nueva instancia
+            const webhookUrl = `${process.env.APP_URL}/webhook/messages?location=${locationId}&instance=${position}`;
+            
+            await evolutionService.createInstance(evolutionInstanceName, {
+                webhookUrl,
+                webhookByEvents: true,
+                webhookBase64: false
+            });
+
+            // 4. Obtener QR code
+            const qrCode = await evolutionService.connectInstance(evolutionInstanceName);
+
+            if (qrCode) {
+                // 5. Actualizar en BD
+                await db.query(
+                    `UPDATE whatsapp_instances 
+                    SET status = 'qr_pending', qr_code = ?, evolution_instance_id = ?, 
+                        disconnected_at = NULL, reconnection_attempts = 0
+                    WHERE location_id = ? AND position = ?`,
+                    [qrCode, evolutionInstanceName, locationId, position]
+                );
+
+                console.log(`✅ New QR code generated and saved for ${instanceName}`);
+                return { success: true, qrCode, forced: true };
+            }
+
+            throw new Error('Could not generate QR code after recreation');
+        } catch (error) {
+            console.error(`❌ Error forcing new QR code for ${locationId}_${position}:`, error);
+            throw error;
+        }
     }
 }
 

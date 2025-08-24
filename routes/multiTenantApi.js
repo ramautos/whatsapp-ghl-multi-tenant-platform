@@ -323,20 +323,20 @@ router.post('/admin/login', async (req, res) => {
 // ================================
 
 // Obtener instancias de un cliente
-router.get('/instances/:locationId', authenticateApiKey, validateLocationId, async (req, res) => {
+router.get('/instances/:locationId', validateLocationId, async (req, res) => {
     try {
         const { locationId } = req.params;
 
-        const instances = await multiTenantService.getClientInstances(locationId);
+        // Usar el nuevo método que sincroniza QR codes automáticamente
+        const result = await multiTenantService.getInstancesWithFreshQR(locationId);
 
-        res.json({
-            success: true,
-            instances,
-            locationId
-        });
+        res.json(result);
     } catch (error) {
-        console.error('Error getting instances:', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error getting instances with fresh QR:', error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message 
+        });
     }
 });
 
@@ -365,26 +365,23 @@ router.post('/instances/:locationId/activate', validateLocationId, async (req, r
 router.post('/instances/:locationId/:position/connect', validateLocationId, async (req, res) => {
     try {
         const { locationId, position } = req.params;
-        const instanceName = `${locationId}_wa_${position}`;
+        const instanceName = `${locationId}_${position}`;
         
         console.log(`🔗 Connecting instance ${instanceName} for position ${position}`);
         
-        // Use multiTenantService to activate instance properly
-        const result = await multiTenantService.activateInstance(locationId, position);
+        // Usar el nuevo método de sincronización que maneja correctamente BD vs Evolution
+        const result = await multiTenantService.syncQRCodeFromEvolution(locationId, parseInt(position));
         
         if (result.success) {
             res.json({
                 success: true,
                 qrCode: result.qrCode,
-                instanceName: result.instanceName || instanceName,
-                position: result.position,
-                message: 'QR code generated successfully'
+                instanceName: instanceName,
+                position: parseInt(position),
+                message: result.connected ? 'Instance already connected' : 'QR code generated successfully'
             });
         } else {
-            res.json({
-                success: false,
-                error: 'Could not generate QR code'
-            });
+            res.status(400).json(result);
         }
     } catch (error) {
         console.error(`Error connecting instance:`, error);
@@ -811,6 +808,32 @@ router.get('/health', (req, res) => {
         service: 'multi-tenant-api',
         version: '1.0.0'
     });
+});
+
+// Forzar nuevo QR code (eliminar y recrear instancia)
+router.post('/instances/:locationId/:position/force-qr', validateLocationId, async (req, res) => {
+    try {
+        const { locationId, position } = req.params;
+        
+        console.log(`🆕 Force QR request for ${locationId}_${position}`);
+        
+        const result = await multiTenantService.forceNewQRCode(locationId, parseInt(position));
+        
+        res.json({
+            success: true,
+            qrCode: result.qrCode,
+            instanceName: `${locationId}_${position}`,
+            position: parseInt(position),
+            message: 'New QR code generated successfully',
+            forced: true
+        });
+    } catch (error) {
+        console.error(`Error forcing QR for ${req.params.locationId}_${req.params.position}:`, error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
 });
 
 module.exports = router;

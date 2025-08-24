@@ -142,17 +142,34 @@ io.on('connection', (socket) => {
 // ================================
 
 // Escuchar eventos del EvolutionService para notificar en tiempo real
-evolutionService.on('qr-code', (data) => {
+evolutionService.on('qr-code', async (data) => {
     console.log('📱 QR Code updated:', data.instanceName);
     
     // Extraer location_id del nombre de instancia
     const locationId = data.instanceName.split('_wa_')[0];
     const position = data.instanceName.split('_wa_')[1];
     
+    try {
+        // Guardar QR code en base de datos
+        const db = require('./config/database-sqlite');
+        await db.query(
+            `UPDATE whatsapp_instances 
+            SET status = 'qr_pending', qr_code = ?, evolution_instance_id = ?
+            WHERE location_id = ? AND position = ?`,
+            [data.qrCode, data.instanceName, locationId, parseInt(position)]
+        );
+        
+        console.log(`✅ QR code saved to DB for ${locationId}_${position}`);
+    } catch (error) {
+        console.error('❌ Error saving QR code to DB:', error);
+    }
+    
+    // Notificar via WebSocket
     io.to(`location_${locationId}`).emit('qr_updated', {
-        position,
+        position: parseInt(position),
         qrCode: data.qrCode,
-        instanceName: data.instanceName
+        instanceName: data.instanceName,
+        timestamp: new Date().toISOString()
     });
 });
 
