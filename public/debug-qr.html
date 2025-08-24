@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug QR Code Generation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .qr-container {
+            border: 2px dashed #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .qr-code {
+            max-width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background: #25d366;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #20b358;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #25d366;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 QR Code Debug Tool</h1>
+        <p>Herramienta para debuggear la generación de códigos QR</p>
+        
+        <div>
+            <label>Location ID:</label>
+            <input type="text" id="locationInput" value="PROD_JS_FIXED_TEST_1756015051381" style="width: 300px; margin: 10px;">
+        </div>
+        
+        <div>
+            <button id="connectBtn" onclick="testQRGeneration()">🔗 Generar QR Code</button>
+            <button onclick="clearLog()">🧹 Limpiar Log</button>
+        </div>
+        
+        <div id="qrContainer" class="qr-container">
+            <p>Haz clic en "Generar QR Code" para probar</p>
+        </div>
+        
+        <h3>📝 Debug Log:</h3>
+        <div id="debugLog" class="log">Esperando acción...</div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('debugLog').textContent = 'Log limpiado.\n';
+        }
+
+        async function testQRGeneration() {
+            const locationId = document.getElementById('locationInput').value.trim();
+            const connectBtn = document.getElementById('connectBtn');
+            const qrContainer = document.getElementById('qrContainer');
+            
+            log(`🔍 Iniciando prueba con locationId: ${locationId}`);
+            
+            if (!locationId) {
+                log('❌ ERROR: Location ID requerido');
+                return;
+            }
+
+            try {
+                // Step 1: Update UI
+                log('1️⃣ Actualizando UI...');
+                connectBtn.innerHTML = '<div class="loading"></div> Generando QR...';
+                connectBtn.disabled = true;
+                qrContainer.innerHTML = '<div class="loading"></div><p>Generando código QR...</p>';
+
+                // Step 2: Make API request
+                log('2️⃣ Llamando API...');
+                const apiUrl = `/api/instances/${locationId}/1/connect`;
+                log(`📡 URL: ${apiUrl}`);
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                log(`📥 Response Status: ${response.status}`);
+                log(`📥 Response Headers: ${JSON.stringify([...response.headers.entries()])}`);
+
+                // Step 3: Parse response
+                log('3️⃣ Procesando respuesta...');
+                const data = await response.json();
+                log(`📄 Response Data: ${JSON.stringify(data, null, 2)}`);
+
+                // Step 4: Check response
+                if (data.success && data.qrCode) {
+                    log('✅ QR Code recibido exitosamente');
+                    log(`📏 QR Code length: ${data.qrCode.length} caracteres`);
+                    log(`🔍 QR Code preview: ${data.qrCode.substring(0, 50)}...`);
+                    
+                    // Step 5: Update DOM
+                    log('4️⃣ Actualizando DOM...');
+                    const qrImage = `<img src="${data.qrCode}" alt="QR Code" class="qr-code">`;
+                    qrContainer.innerHTML = qrImage;
+                    
+                    connectBtn.innerHTML = '📱 QR Code Generado ✅';
+                    connectBtn.disabled = false;
+                    log('✅ DOM actualizado exitosamente');
+                    
+                } else {
+                    throw new Error(data.error || 'No se recibió QR code');
+                }
+
+            } catch (error) {
+                log(`❌ ERROR: ${error.message}`);
+                log(`🔍 Error stack: ${error.stack}`);
+                
+                connectBtn.innerHTML = '❌ Error - Reintentar';
+                connectBtn.disabled = false;
+                qrContainer.innerHTML = '<p style="color: red;">Error generando QR code</p>';
+            }
+        }
+
+        // Auto-test on load
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Debug tool cargado correctamente');
+            log('ℹ️ Utiliza el botón para probar la generación de QR');
+        });
+    </script>
+</body>
+</html>
