@@ -74,6 +74,11 @@ app.get('/dashboard/:locationId', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'simple-dashboard.html'));
 });
 
+// Dashboard simple directo (sin cache)
+app.get('/simple/:locationId', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'simple-dashboard.html'));
+});
+
 // Página de registro para nuevos clientes
 app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'register.html'));
