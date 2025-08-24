@@ -179,14 +179,26 @@ class MultiTenantService {
         );
 
         // Si se conectó, obtener número de teléfono
-        if (status === 'connected' && data.data.pushname) {
-            const phoneNumber = data.data.legacy?.user || data.data.me?.id;
-            await db.query(
-                `UPDATE whatsapp_instances 
-                SET phone_number = ? 
-                WHERE location_id = ? AND position = ?`,
-                [phoneNumber, locationId, position]
-            );
+        if (status === 'connected') {
+            const phoneNumber = data.data.legacy?.user || 
+                               data.data.me?.id || 
+                               data.data.pushname || 
+                               data.data.number ||
+                               data.data.jid?.split('@')[0];
+            
+            if (phoneNumber) {
+                // Limpiar formato del número (remover @s.whatsapp.net, etc)
+                const cleanNumber = phoneNumber.replace('@s.whatsapp.net', '').replace('@c.us', '');
+                
+                await db.query(
+                    `UPDATE whatsapp_instances 
+                    SET phone_number = ? 
+                    WHERE location_id = ? AND position = ?`,
+                    [cleanNumber, locationId, position]
+                );
+                
+                console.log(`📱 Phone number saved for ${instanceName}: +${cleanNumber}`);
+            }
         }
 
         console.log(`📱 Instance ${instanceName} status: ${status}`);
