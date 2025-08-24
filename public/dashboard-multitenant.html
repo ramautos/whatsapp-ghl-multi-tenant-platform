@@ -337,6 +337,9 @@
             <div class="location-id" id="location-id">Location ID: loading...</div>
         </div>
 
+        <!-- Error Message -->
+        <div id="error-message" style="display: none; margin: 0 30px 20px; padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; border-radius: 8px;"></div>
+        
         <!-- Instances -->
         <div class="instances-container" id="instances-container">
             <!-- Se generan dinámicamente -->
@@ -413,6 +416,11 @@
                 instances = data.instances || [];
                 renderInstances();
                 updateStats();
+                // Ocultar mensaje de error si la carga fue exitosa
+                const errorDiv = document.getElementById('error-message');
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
             } catch (error) {
                 console.error('Error loading instances:', error);
                 // Crear 1 slot por defecto si hay error
@@ -422,6 +430,11 @@
                     instance_name: locationId
                 }];
                 renderInstances();
+                const errorDiv = document.getElementById('error-message');
+                if (errorDiv) {
+                    errorDiv.textContent = `Error cargando instancias: ${error.message}`;
+                    errorDiv.style.display = 'block';
+                }
             }
         }
 
@@ -471,11 +484,15 @@
             return div;
         }
 
-        async function connectInstance(position) {
+        async function connectInstance(position, buttonElement = null) {
             try {
-                const btn = event.target;
-                btn.innerHTML = '<span class="loading"></span> Generando...';
-                btn.disabled = true;
+                // Obtener el botón de manera segura
+                const btn = buttonElement || event?.target || document.querySelector(`button[onclick="connectInstance(${position})"]`);
+                
+                if (btn) {
+                    btn.innerHTML = '<span class="loading"></span> Generando...';
+                    btn.disabled = true;
+                }
 
                 const response = await fetch(`/api/instances/${locationId}/activate`, {
                     method: 'POST',
@@ -488,10 +505,18 @@
                 if (data.success && data.qrCode) {
                     showQRCode(data.qrCode, position);
                     await loadInstances();
+                } else {
+                    throw new Error(data.message || 'Error desconocido');
                 }
             } catch (error) {
-                console.error('Error connecting instance:', error);
-                alert('Error al conectar la instancia');
+                console.error('Error conectando instancia:', error);
+                const errorDiv = document.getElementById('error-message');
+                if (errorDiv) {
+                    errorDiv.textContent = `Error al conectar la instancia: ${error.message}`;
+                    errorDiv.style.display = 'block';
+                }
+                // Recargar instancias para restaurar el botón
+                await loadInstances();
             }
         }
 
@@ -508,10 +533,16 @@
                 const data = await response.json();
                 if (data.success) {
                     await loadInstances();
+                } else {
+                    throw new Error(data.message || 'Error desconocido');
                 }
             } catch (error) {
-                console.error('Error disconnecting instance:', error);
-                alert('Error al desconectar la instancia');
+                console.error('Error desconectando instancia:', error);
+                const errorDiv = document.getElementById('error-message');
+                if (errorDiv) {
+                    errorDiv.textContent = `Error al desconectar la instancia: ${error.message}`;
+                    errorDiv.style.display = 'block';
+                }
             }
         }
 
