@@ -17,28 +17,55 @@ class ReconnectionService extends EventEmitter {
     }
 
     initialize() {
-        console.log('🔄 Initializing Auto-Reconnection Service...');
-        
-        // Verificar conexiones cada 2 minutos
-        cron.schedule('*/2 * * * *', () => {
-            this.checkConnections();
-        });
+        try {
+            console.log('🔄 Initializing Auto-Reconnection Service...');
+            
+            // Verificar conexiones cada 2 minutos
+            cron.schedule('*/2 * * * *', () => {
+                try {
+                    this.checkConnections();
+                } catch (error) {
+                    console.error('❌ Error in scheduled connection check:', error);
+                    this.emit('schedule-error', { type: 'connection-check', error: error.message });
+                }
+            });
 
-        // Health check completo cada 15 minutos
-        cron.schedule('*/15 * * * *', () => {
-            this.fullHealthCheck();
-        });
+            // Health check completo cada 15 minutos
+            cron.schedule('*/15 * * * *', () => {
+                try {
+                    this.fullHealthCheck();
+                } catch (error) {
+                    console.error('❌ Error in scheduled health check:', error);
+                    this.emit('schedule-error', { type: 'health-check', error: error.message });
+                }
+            });
 
-        // Reset contadores de reintentos cada hora
-        cron.schedule('0 * * * *', () => {
-            this.resetRetryCounters();
-        });
+            // Reset contadores de reintentos cada hora
+            cron.schedule('0 * * * *', () => {
+                try {
+                    this.resetRetryCounters();
+                } catch (error) {
+                    console.error('❌ Error in scheduled retry counter reset:', error);
+                    this.emit('schedule-error', { type: 'retry-reset', error: error.message });
+                }
+            });
 
-        this.isRunning = true;
-        console.log('✅ Auto-Reconnection Service started');
-        
-        // Emit evento de inicio
-        this.emit('service-started');
+            this.isRunning = true;
+            console.log('✅ Auto-Reconnection Service started');
+            
+            // Emit evento de inicio
+            this.emit('service-started');
+            
+        } catch (error) {
+            console.error('❌ Critical error initializing Auto-Reconnection Service:', error);
+            this.isRunning = false;
+            this.emit('service-error', { 
+                type: 'initialization-failed', 
+                error: error.message,
+                stack: error.stack
+            });
+            throw error;
+        }
     }
 
     // ================================
@@ -331,31 +358,86 @@ class ReconnectionService extends EventEmitter {
         try {
             console.log('🔍 Running full health check...');
             
-            // Verificar servicio Evolution API
-            const evolutionHealth = await evolutionService.healthCheck();
+            // Verificar servicio Evolution API con timeout
+            const evolutionHealth = await Promise.race([
+                evolutionService.healthCheck(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Evolution health check timeout')), 10000))
+            ]).catch(error => ({
+                status: 'unhealthy',
+                connected: false,
+                error: error.message,
+                timestamp: new Date().toISOString()
+            }));
             
-            // Verificar base de datos
-            const dbHealth = await this.checkDatabaseHealth();
+            // Verificar base de datos con timeout
+            const dbHealth = await Promise.race([
+                this.checkDatabaseHealth(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Database health check timeout')), 5000))
+            ]).catch(error => ({
+                status: 'unhealthy',
+                error: error.message
+            }));
             
-            // Verificar métricas del sistema
+            // Verificar métricas del sistema (no falla nunca)
             const systemHealth = await this.checkSystemHealth();
             
             const overallHealth = {
                 evolution: evolutionHealth,
                 database: dbHealth,
                 system: systemHealth,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                overall_status: this.calculateOverallStatus(evolutionHealth, dbHealth, systemHealth)
             };
 
-            console.log('🏥 Full health check results:', overallHealth);
+            console.log('🏥 Full health check results:', {
+                evolution: evolutionHealth?.status || 'unknown',
+                database: dbHealth?.status || 'unknown',
+                system: systemHealth?.status || 'unknown',
+                overall: overallHealth.overall_status
+            });
             
             // Emit evento de health check
             this.emit('full-health-check', overallHealth);
             
+            // Log critical issues
+            if (overallHealth.overall_status === 'critical') {
+                console.error('🚨 CRITICAL SYSTEM HEALTH ISSUE DETECTED:', overallHealth);
+                this.emit('critical-health-issue', overallHealth);
+            }
+            
             return overallHealth;
         } catch (error) {
-            console.error('❌ Error in full health check:', error);
-            return { error: error.message };
+            console.error('❌ Critical error in full health check:', error);
+            const errorHealth = {
+                error: error.message,
+                stack: error.stack,
+                timestamp: new Date().toISOString(),
+                overall_status: 'error'
+            };
+            
+            this.emit('health-check-error', errorHealth);
+            return errorHealth;
+        }
+    }
+
+    calculateOverallStatus(evolutionHealth, dbHealth, systemHealth) {
+        try {
+            const evolutionHealthy = evolutionHealth?.status === 'healthy';
+            const dbHealthy = dbHealth?.status === 'healthy';
+            const systemHealthy = systemHealth?.status === 'healthy';
+            
+            if (evolutionHealthy && dbHealthy && systemHealthy) {
+                return 'healthy';
+            } else if (!evolutionHealthy && !dbHealthy) {
+                return 'critical';
+            } else if (!evolutionHealthy || !dbHealthy) {
+                return 'degraded';
+            } else {
+                return 'warning';
+            }
+        } catch (error) {
+            console.error('❌ Error calculating overall status:', error);
+            return 'error';
         }
     }
 

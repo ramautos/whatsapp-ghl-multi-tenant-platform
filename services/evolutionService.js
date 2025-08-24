@@ -404,6 +404,78 @@ class EvolutionService extends EventEmitter {
       locationId
     };
   }
+
+  // ================================
+  // HEALTH CHECK AND MONITORING
+  // ================================
+
+  async healthCheck() {
+    try {
+      const response = await axios.get(`${this.apiUrl}/manager/health`, {
+        headers: { 'apikey': this.apiKey },
+        timeout: 5000 // 5 second timeout
+      });
+
+      return {
+        status: 'healthy',
+        connected: true,
+        response: response.data,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('❌ Evolution API health check failed:', error.message);
+      return {
+        status: 'unhealthy',
+        connected: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
+
+  async restartInstance(instanceName) {
+    try {
+      const response = await axios.put(
+        `${this.apiUrl}/instance/restart/${instanceName}`,
+        {},
+        {
+          headers: { 'apikey': this.apiKey }
+        }
+      );
+
+      // Update local instance status
+      const instance = this.instances.get(instanceName) || {};
+      instance.status = 'restarting';
+      this.instances.set(instanceName, instance);
+
+      return response.data;
+    } catch (error) {
+      console.error('Error restarting instance:', error.message);
+      throw error;
+    }
+  }
+
+  async getInstanceInfo(instanceName) {
+    try {
+      const response = await axios.get(
+        `${this.apiUrl}/instance/info/${instanceName}`,
+        {
+          headers: { 'apikey': this.apiKey }
+        }
+      );
+
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      console.error('Error getting instance info:', error.message);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
 }
 
 module.exports = new EvolutionService();

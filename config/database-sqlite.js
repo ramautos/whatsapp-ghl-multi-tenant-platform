@@ -145,6 +145,9 @@ class SQLiteDatabaseService {
 
         // Ejecutar migraciones para columnas faltantes
         this.runMigrations();
+        
+        // Crear índices para performance
+        this.createIndexes();
     }
 
     runMigrations() {
@@ -192,6 +195,80 @@ class SQLiteDatabaseService {
                 if (err && !err.message.includes('duplicate column')) {
                     // Ignorar errores de columnas duplicadas
                     console.log('Migration note:', err.message);
+                }
+            });
+        });
+    }
+
+    createIndexes() {
+        console.log('🔍 Creating database indexes for performance optimization...');
+        
+        const indexes = [
+            // Indexes for ghl_installations table
+            'CREATE INDEX IF NOT EXISTS idx_ghl_location_id ON ghl_installations(location_id)',
+            'CREATE INDEX IF NOT EXISTS idx_ghl_status ON ghl_installations(status)',
+            'CREATE INDEX IF NOT EXISTS idx_ghl_installed_at ON ghl_installations(installed_at)',
+            
+            // Indexes for clients table
+            'CREATE INDEX IF NOT EXISTS idx_clients_location_id ON clients(location_id)',
+            'CREATE INDEX IF NOT EXISTS idx_clients_email ON clients(email)',
+            'CREATE INDEX IF NOT EXISTS idx_clients_is_active ON clients(is_active)',
+            'CREATE INDEX IF NOT EXISTS idx_clients_registered_at ON clients(registered_at)',
+            'CREATE INDEX IF NOT EXISTS idx_clients_last_login ON clients(last_login)',
+            
+            // Indexes for whatsapp_instances table
+            'CREATE INDEX IF NOT EXISTS idx_instances_location_id ON whatsapp_instances(location_id)',
+            'CREATE INDEX IF NOT EXISTS idx_instances_status ON whatsapp_instances(status)',
+            'CREATE INDEX IF NOT EXISTS idx_instances_position ON whatsapp_instances(position)',
+            'CREATE INDEX IF NOT EXISTS idx_instances_created_at ON whatsapp_instances(created_at)',
+            'CREATE INDEX IF NOT EXISTS idx_instances_last_activity ON whatsapp_instances(last_activity)',
+            'CREATE INDEX IF NOT EXISTS idx_instances_last_seen ON whatsapp_instances(last_seen)',
+            'CREATE INDEX IF NOT EXISTS idx_instances_connected_at ON whatsapp_instances(connected_at)',
+            'CREATE INDEX IF NOT EXISTS idx_instances_location_position ON whatsapp_instances(location_id, position)',
+            'CREATE INDEX IF NOT EXISTS idx_instances_status_location ON whatsapp_instances(status, location_id)',
+            
+            // Indexes for message_logs table
+            'CREATE INDEX IF NOT EXISTS idx_messages_location_id ON message_logs(location_id)',
+            'CREATE INDEX IF NOT EXISTS idx_messages_instance_name ON message_logs(instance_name)',
+            'CREATE INDEX IF NOT EXISTS idx_messages_processed_at ON message_logs(processed_at)',
+            'CREATE INDEX IF NOT EXISTS idx_messages_direction ON message_logs(direction)',
+            'CREATE INDEX IF NOT EXISTS idx_messages_status ON message_logs(status)',
+            'CREATE INDEX IF NOT EXISTS idx_messages_from_number ON message_logs(from_number)',
+            'CREATE INDEX IF NOT EXISTS idx_messages_location_processed ON message_logs(location_id, processed_at)',
+            
+            // Indexes for client_statistics table
+            'CREATE INDEX IF NOT EXISTS idx_stats_location_id ON client_statistics(location_id)',
+            'CREATE INDEX IF NOT EXISTS idx_stats_date ON client_statistics(date)',
+            'CREATE INDEX IF NOT EXISTS idx_stats_location_date ON client_statistics(location_id, date)',
+            
+            // Indexes for client_settings table
+            'CREATE INDEX IF NOT EXISTS idx_settings_location_id ON client_settings(location_id)',
+            'CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON client_settings(updated_at)',
+            
+            // Indexes for system_metrics table
+            'CREATE INDEX IF NOT EXISTS idx_metrics_name ON system_metrics(metric_name)',
+            'CREATE INDEX IF NOT EXISTS idx_metrics_updated_at ON system_metrics(updated_at)',
+            
+            // Indexes for webhook_logs table
+            'CREATE INDEX IF NOT EXISTS idx_webhook_location_id ON webhook_logs(location_id)',
+            'CREATE INDEX IF NOT EXISTS idx_webhook_created_at ON webhook_logs(created_at)',
+            'CREATE INDEX IF NOT EXISTS idx_webhook_processed ON webhook_logs(processed)',
+            'CREATE INDEX IF NOT EXISTS idx_webhook_event_type ON webhook_logs(event_type)',
+            'CREATE INDEX IF NOT EXISTS idx_webhook_instance_name ON webhook_logs(instance_name)'
+        ];
+
+        let indexesCreated = 0;
+        indexes.forEach((indexSql, i) => {
+            this.db.run(indexSql, (err) => {
+                if (err && !err.message.includes('already exists')) {
+                    console.error('Error creating index:', err.message);
+                } else {
+                    indexesCreated++;
+                    
+                    // Log completion when all indexes are processed
+                    if (i === indexes.length - 1) {
+                        console.log(`✅ Database indexes created/verified: ${indexesCreated}/${indexes.length}`);
+                    }
                 }
             });
         });

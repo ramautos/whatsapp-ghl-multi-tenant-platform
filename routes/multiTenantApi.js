@@ -7,6 +7,103 @@ const db = require('../config/database-sqlite');
 const evolutionService = require('../services/evolutionService');
 
 // ================================
+// AUTHENTICATION MIDDLEWARE
+// ================================
+
+// API Key authentication middleware
+const authenticateApiKey = (req, res, next) => {
+    const apiKey = req.headers['x-api-key'] || req.headers['authorization'];
+    const validApiKey = process.env.API_KEY || 'cloude-api-key-2024';
+    
+    // Skip authentication for health checks and public endpoints
+    const publicEndpoints = ['/health', '/system/status'];
+    const isPublicEndpoint = publicEndpoints.some(endpoint => req.path === endpoint);
+    
+    if (isPublicEndpoint) {
+        return next();
+    }
+    
+    if (!apiKey) {
+        return res.status(401).json({ 
+            success: false,
+            error: 'API key required',
+            message: 'Include X-API-Key header or Authorization header' 
+        });
+    }
+    
+    // Remove 'Bearer ' prefix if present
+    const cleanApiKey = apiKey.replace(/^Bearer\s+/i, '');
+    
+    if (cleanApiKey !== validApiKey) {
+        return res.status(401).json({ 
+            success: false,
+            error: 'Invalid API key' 
+        });
+    }
+    
+    next();
+};
+
+// Location ID validation middleware
+const validateLocationId = (req, res, next) => {
+    const locationId = req.params.locationId || req.body.locationId;
+    
+    if (!locationId) {
+        return res.status(400).json({
+            success: false,
+            error: 'Location ID is required'
+        });
+    }
+    
+    // Basic location ID format validation (alphanumeric + underscores/hyphens)
+    const locationIdRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!locationIdRegex.test(locationId)) {
+        return res.status(400).json({
+            success: false,
+            error: 'Invalid location ID format'
+        });
+    }
+    
+    next();
+};
+
+// Rate limiting middleware (simple implementation)
+const rateLimitMap = new Map();
+const rateLimit = (req, res, next) => {
+    const clientId = req.ip || 'unknown';
+    const now = Date.now();
+    const windowMs = 60 * 1000; // 1 minute window
+    const maxRequests = 100; // max requests per window
+    
+    if (!rateLimitMap.has(clientId)) {
+        rateLimitMap.set(clientId, { count: 1, resetTime: now + windowMs });
+        return next();
+    }
+    
+    const clientData = rateLimitMap.get(clientId);
+    
+    if (now > clientData.resetTime) {
+        // Reset window
+        rateLimitMap.set(clientId, { count: 1, resetTime: now + windowMs });
+        return next();
+    }
+    
+    if (clientData.count >= maxRequests) {
+        return res.status(429).json({
+            success: false,
+            error: 'Rate limit exceeded',
+            message: 'Too many requests, please try again later'
+        });
+    }
+    
+    clientData.count++;
+    next();
+};
+
+// Apply rate limiting to all routes
+router.use(rateLimit);
+
+// ================================
 // RUTAS DE REGISTRO Y AUTENTICACIÓN
 // ================================
 
@@ -217,7 +314,7 @@ router.post('/admin/login', async (req, res) => {
 // ================================
 
 // Obtener instancias de un cliente
-router.get('/instances/:locationId', async (req, res) => {
+router.get('/instances/:locationId', authenticateApiKey, validateLocationId, async (req, res) => {
     try {
         const { locationId } = req.params;
 
@@ -235,7 +332,7 @@ router.get('/instances/:locationId', async (req, res) => {
 });
 
 // Activar instancia (generar QR)
-router.post('/instances/:locationId/activate', async (req, res) => {
+router.post('/instances/:locationId/activate', authenticateApiKey, validateLocationId, async (req, res) => {
     try {
         const { locationId } = req.params;
         const { position } = req.body;
@@ -256,7 +353,7 @@ router.post('/instances/:locationId/activate', async (req, res) => {
 });
 
 // Conectar instancia específica (nueva ruta simple)
-router.post('/instances/:locationId/:position/connect', async (req, res) => {
+router.post('/instances/:locationId/:position/connect', authenticateApiKey, validateLocationId, async (req, res) => {
     try {
         const { locationId, position } = req.params;
         const instanceName = `${locationId}_${position}`;
@@ -471,7 +568,7 @@ router.put('/settings/:locationId', async (req, res) => {
 // ================================
 
 // Obtener todos los clientes (para admin)
-router.get('/admin/clients', async (req, res) => {
+router.get('/admin/clients', authenticateApiKey, async (req, res) => {
     try {
         const clients = await db.query(
             `SELECT c.*, g.company_name, g.installed_at,
@@ -495,7 +592,7 @@ router.get('/admin/clients', async (req, res) => {
 });
 
 // Estadísticas globales del sistema
-router.get('/admin/stats', async (req, res) => {
+router.get('/admin/stats', authenticateApiKey, async (req, res) => {
     try {
         // Estadísticas principales
         const [mainStats] = await db.query(`
