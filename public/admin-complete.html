@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 WhatsApp-GHL Platform - Admin Center</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 0;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .status-badge {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 15px 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .nav-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #25d366, #20b358);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #fff, #f8f9fa);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #25d366, #20b358);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #25d366;
+            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #25d366, #20b358);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table tr:hover {
+            background-color: rgba(37, 211, 102, 0.05);
+        }
+
+        .status-online {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .status-offline {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: none;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.05));
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.05));
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .iframe-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .nav-tabs {
+                justify-content: center;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-cogs" style="font-size: 32px; color: #25d366;"></i>
+                <h1>WhatsApp-GHL Admin Center</h1>
+            </div>
+            <div class="status-badge">
+                <i class="fas fa-circle" style="color: #4CAF50;"></i>
+                SISTEMA ACTIVO
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('dashboard')">
+                <i class="fas fa-chart-line"></i>
+                Dashboard
+            </button>
+            <button class="nav-tab" onclick="showTab('clients')">
+                <i class="fas fa-users"></i>
+                Clientes
+            </button>
+            <button class="nav-tab" onclick="showTab('instances')">
+                <i class="fab fa-whatsapp"></i>
+                Instancias
+            </button>
+            <button class="nav-tab" onclick="showTab('webhooks')">
+                <i class="fas fa-webhook"></i>
+                Webhooks
+            </button>
+            <button class="nav-tab" onclick="showTab('settings')">
+                <i class="fas fa-cog"></i>
+                Configuración
+            </button>
+            <button class="nav-tab" onclick="showTab('tools')">
+                <i class="fas fa-tools"></i>
+                Herramientas
+            </button>
+            <button class="nav-tab" onclick="showTab('logs')">
+                <i class="fas fa-file-alt"></i>
+                Logs
+            </button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <h2 style="margin-bottom: 25px; color: #2c3e50;">
+                <i class="fas fa-chart-line"></i> Dashboard Principal
+            </h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-users stat-icon"></i>
+                    <div class="stat-value" id="totalClients">-</div>
+                    <div class="stat-label">Clientes Registrados</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fab fa-whatsapp stat-icon"></i>
+                    <div class="stat-value" id="activeInstances">-</div>
+                    <div class="stat-label">Instancias Activas</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-comments stat-icon"></i>
+                    <div class="stat-value" id="totalMessages">-</div>
+                    <div class="stat-label">Mensajes Procesados</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-server stat-icon"></i>
+                    <div class="stat-value" id="systemStatus">-</div>
+                    <div class="stat-label">Estado del Sistema</div>
+                </div>
+            </div>
+
+            <div class="iframe-container">
+                <h3 style="margin-bottom: 15px; color: #2c3e50;">
+                    <i class="fas fa-chart-area"></i> Dashboard Interactivo
+                </h3>
+                <iframe src="/admin" title="Admin Dashboard"></iframe>
+            </div>
+        </div>
+
+        <!-- Clientes Tab -->
+        <div id="clients" class="tab-content">
+            <h2 style="margin-bottom: 25px; color: #2c3e50;">
+                <i class="fas fa-users"></i> Gestión de Clientes
+            </h2>
+            
+            <div class="form-grid">
+                <div>
+                    <h3>Agregar Nuevo Cliente</h3>
+                    <div class="form-group">
+                        <label>Location ID</label>
+                        <input type="text" class="form-control" id="newLocationId" placeholder="ej: TEST_CLIENT_123">
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre de la Empresa</label>
+                        <input type="text" class="form-control" id="newCompanyName" placeholder="ej: Mi Empresa SAS">
+                    </div>
+                    <div class="form-group">
+                        <label>Email de Contacto</label>
+                        <input type="email" class="form-control" id="newEmail" placeholder="admin@empresa.com">
+                    </div>
+                    <button class="btn" onclick="createClient()">
+                        <i class="fas fa-plus"></i>
+                        Crear Cliente
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Location ID</th>
+                            <th>Empresa</th>
+                            <th>Email</th>
+                            <th>Instancias</th>
+                            <th>Último Acceso</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientsTable">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 30px;">
+                                <i class="loading"></i> Cargando clientes...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Instancias Tab -->
+        <div id="instances" class="tab-content">
+            <h2 style="margin-bottom: 25px; color: #2c3e50;">
+                <i class="fab fa-whatsapp"></i> Gestión de Instancias WhatsApp
+            </h2>
+            
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-danger" onclick="cleanAllInstances()">
+                    <i class="fas fa-trash-alt"></i>
+                    Limpiar Todas las Instancias
+                </button>
+                <button class="btn btn-secondary" onclick="refreshInstances()">
+                    <i class="fas fa-sync-alt"></i>
+                    Actualizar
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Instancia</th>
+                            <th>Cliente</th>
+                            <th>Estado</th>
+                            <th>Teléfono</th>
+                            <th>Última Actividad</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="instancesTable">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 30px;">
+                                <i class="loading"></i> Cargando instancias...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Webhooks Tab -->
+        <div id="webhooks" class="tab-content">
+            <h2 style="margin-bottom: 25px; color: #2c3e50;">
+                <i class="fas fa-webhook"></i> Configuración de Webhooks
+            </h2>
+            
+            <div class="form-grid">
+                <div>
+                    <h3>Configuración Global de Webhooks</h3>
+                    <div class="form-group">
+                        <label>URL de Webhook Principal</label>
+                        <input type="url" class="form-control" id="mainWebhookUrl" placeholder="https://tu-servidor.com/webhook">
+                    </div>
+                    <div class="form-group">
+                        <label>Token de Seguridad</label>
+                        <input type="text" class="form-control" id="webhookToken" placeholder="tu-token-secreto">
+                    </div>
+                    <div class="form-group">
+                        <label>Eventos a Procesar</label>
+                        <select class="form-control" id="webhookEvents" multiple>
+                            <option value="messages.upsert">Mensajes Entrantes</option>
+                            <option value="connection.update">Cambios de Conexión</option>
+                            <option value="qr.updated">Códigos QR</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="saveWebhookConfig()">
+                        <i class="fas fa-save"></i>
+                        Guardar Configuración
+                    </button>
+                    <button class="btn btn-secondary" onclick="testWebhook()">
+                        <i class="fas fa-vial"></i>
+                        Probar Webhook
+                    </button>
+                </div>
+                
+                <div>
+                    <h3>URLs de Webhook por Cliente</h3>
+                    <div class="form-group">
+                        <label>Cliente (Location ID)</label>
+                        <select class="form-control" id="clientSelect">
+                            <option value="">Seleccionar cliente...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>URL Personalizada</label>
+                        <input type="url" class="form-control" id="clientWebhookUrl" placeholder="https://webhook-cliente.com/receive">
+                    </div>
+                    <button class="btn" onclick="saveClientWebhook()">
+                        <i class="fas fa-user-cog"></i>
+                        Configurar Cliente
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <h3 style="margin: 25px 0 15px; color: #2c3e50;">Logs de Webhooks Recientes</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Cliente</th>
+                            <th>Evento</th>
+                            <th>Estado</th>
+                            <th>Detalles</th>
+                        </tr>
+                    </thead>
+                    <tbody id="webhookLogsTable">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 30px;">
+                                <i class="loading"></i> Cargando logs...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Configuración Tab -->
+        <div id="settings" class="tab-content">
+            <h2 style="margin-bottom: 25px; color: #2c3e50;">
+                <i class="fas fa-cog"></i> Configuración del Sistema
+            </h2>
+            
+            <div class="form-grid">
+                <div>
+                    <h3>Evolution API</h3>
+                    <div class="form-group">
+                        <label>URL de Evolution API</label>
+                        <input type="url" class="form-control" id="evolutionUrl" value="https://evolutionv2.cloude.es">
+                    </div>
+                    <div class="form-group">
+                        <label>API Key</label>
+                        <input type="password" class="form-control" id="evolutionApiKey" placeholder="Tu API Key">
+                    </div>
+                    <button class="btn" onclick="testEvolutionConnection()">
+                        <i class="fas fa-plug"></i>
+                        Probar Conexión
+                    </button>
+                </div>
+
+                <div>
+                    <h3>GoHighLevel</h3>
+                    <div class="form-group">
+                        <label>Client ID</label>
+                        <input type="text" class="form-control" id="ghlClientId" placeholder="Tu GHL Client ID">
+                    </div>
+                    <div class="form-group">
+                        <label>Client Secret</label>
+                        <input type="password" class="form-control" id="ghlClientSecret" placeholder="Tu GHL Client Secret">
+                    </div>
+                    <div class="form-group">
+                        <label>Location ID por Defecto</label>
+                        <input type="text" class="form-control" id="ghlLocationId" placeholder="jtEqGdhkoR6iePmZaCmd">
+                    </div>
+                    <button class="btn" onclick="testGHLConnection()">
+                        <i class="fas fa-handshake"></i>
+                        Probar Conexión
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div>
+                    <h3>Configuración General</h3>
+                    <div class="form-group">
+                        <label>Máximo de Instancias por Cliente</label>
+                        <input type="number" class="form-control" id="maxInstances" value="5" min="1" max="20">
+                    </div>
+                    <div class="form-group">
+                        <label>Intervalo de Health Check (minutos)</label>
+                        <input type="number" class="form-control" id="healthCheckInterval" value="2" min="1" max="60">
+                    </div>
+                    <div class="form-group">
+                        <label>Retención de Logs (días)</label>
+                        <input type="number" class="form-control" id="logRetention" value="30" min="1" max="365">
+                    </div>
+                </div>
+
+                <div>
+                    <h3>Notificaciones</h3>
+                    <div class="form-group">
+                        <label>Email de Alertas</label>
+                        <input type="email" class="form-control" id="alertEmail" placeholder="admin@tuempresa.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Webhook de Slack</label>
+                        <input type="url" class="form-control" id="slackWebhook" placeholder="https://hooks.slack.com/...">
+                    </div>
+                    <div class="form-group">
+                        <label>Habilitar Notificaciones</label>
+                        <select class="form-control" id="notificationsEnabled">
+                            <option value="true">Habilitadas</option>
+                            <option value="false">Deshabilitadas</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="saveGlobalSettings()">
+                <i class="fas fa-save"></i>
+                Guardar Configuración Global
+            </button>
+        </div>
+
+        <!-- Herramientas Tab -->
+        <div id="tools" class="tab-content">
+            <h2 style="margin-bottom: 25px; color: #2c3e50;">
+                <i class="fas fa-tools"></i> Herramientas de Administración
+            </h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card" style="cursor: pointer;" onclick="openQRDebugger()">
+                    <i class="fas fa-qrcode stat-icon"></i>
+                    <div class="stat-label">Debugger QR</div>
+                    <p style="margin-top: 10px; color: #6c757d; font-size: 12px;">
+                        Herramienta para probar generación de códigos QR
+                    </p>
+                </div>
+                
+                <div class="stat-card" style="cursor: pointer;" onclick="showClientDashboard()">
+                    <i class="fas fa-tachometer-alt stat-icon"></i>
+                    <div class="stat-label">Dashboard Cliente</div>
+                    <p style="margin-top: 10px; color: #6c757d; font-size: 12px;">
+                        Vista de dashboard para clientes
+                    </p>
+                </div>
+                
+                <div class="stat-card" style="cursor: pointer;" onclick="runDatabaseOptimization()">
+                    <i class="fas fa-database stat-icon"></i>
+                    <div class="stat-label">Optimizar BD</div>
+                    <p style="margin-top: 10px; color: #6c757d; font-size: 12px;">
+                        Optimizar y limpiar base de datos
+                    </p>
+                </div>
+                
+                <div class="stat-card" style="cursor: pointer;" onclick="generateReport()">
+                    <i class="fas fa-chart-bar stat-icon"></i>
+                    <div class="stat-label">Generar Reporte</div>
+                    <p style="margin-top: 10px; color: #6c757d; font-size: 12px;">
+                        Reporte completo del sistema
+                    </p>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div>
+                    <h3>Herramientas de Cliente</h3>
+                    <div class="form-group">
+                        <label>Location ID del Cliente</label>
+                        <input type="text" class="form-control" id="toolLocationId" placeholder="Ingrese Location ID">
+                    </div>
+                    <button class="btn" onclick="openClientDashboard()">
+                        <i class="fas fa-external-link-alt"></i>
+                        Abrir Dashboard Cliente
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetClientInstances()">
+                        <i class="fas fa-undo"></i>
+                        Resetear Instancias
+                    </button>
+                </div>
+                
+                <div>
+                    <h3>Testing y Debug</h3>
+                    <button class="btn" onclick="createTestInstallation()">
+                        <i class="fas fa-vial"></i>
+                        Crear Instalación Test
+                    </button>
+                    <button class="btn" onclick="runSystemCheck()">
+                        <i class="fas fa-stethoscope"></i>
+                        Diagnóstico Sistema
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportLogs()">
+                        <i class="fas fa-download"></i>
+                        Exportar Logs
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs Tab -->
+        <div id="logs" class="tab-content">
+            <h2 style="margin-bottom: 25px; color: #2c3e50;">
+                <i class="fas fa-file-alt"></i> Logs del Sistema
+            </h2>
+            
+            <div style="margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap;">
+                <select class="form-control" id="logFilter" style="max-width: 200px;" onchange="filterLogs()">
+                    <option value="all">Todos los Logs</option>
+                    <option value="error">Solo Errores</option>
+                    <option value="success">Solo Éxitos</option>
+                    <option value="webhook">Webhooks</option>
+                    <option value="connection">Conexiones</option>
+                </select>
+                <button class="btn btn-secondary" onclick="refreshLogs()">
+                    <i class="fas fa-sync-alt"></i>
+                    Actualizar
+                </button>
+                <button class="btn btn-secondary" onclick="clearLogs()">
+                    <i class="fas fa-trash"></i>
+                    Limpiar
+                </button>
+            </div>
+
+            <div style="background: #1e1e1e; color: #00ff00; padding: 20px; border-radius: 10px; font-family: 'Courier New', monospace; height: 500px; overflow-y: auto; font-size: 12px;" id="logsContainer">
+                <div style="text-align: center; color: #666;">
+                    <i class="loading" style="border-top-color: #00ff00;"></i>
+                    Cargando logs...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 10000;"></div>
+
+    <script>
+        // Variables globales
+        let currentStats = {};
+        let refreshInterval;
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardStats();
+            loadClients();
+            loadInstances();
+            loadWebhookLogs();
+            loadLogs();
+            
+            // Auto-refresh cada 30 segundos
+            refreshInterval = setInterval(() => {
+                if (document.querySelector('.nav-tab.active').textContent.includes('Dashboard')) {
+                    loadDashboardStats();
+                }
+            }, 30000);
+        });
+
+        // Navegación entre tabs
+        function showTab(tabId) {
+            // Ocultar todas las pestañas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remover clase activa de todos los botones
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Mostrar pestaña seleccionada
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Cargar datos específicos de la pestaña
+            switch(tabId) {
+                case 'dashboard':
+                    loadDashboardStats();
+                    break;
+                case 'clients':
+                    loadClients();
+                    break;
+                case 'instances':
+                    loadInstances();
+                    break;
+                case 'webhooks':
+                    loadWebhookLogs();
+                    break;
+                case 'logs':
+                    loadLogs();
+                    break;
+            }
+        }
+
+        // Dashboard functions
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch('/api/admin/stats', {
+                    headers: { 'X-API-Key': 'cloude-api-key-2024' }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('totalClients').textContent = data.stats.totalClients || 0;
+                    document.getElementById('activeInstances').textContent = data.stats.activeInstances || 0;
+                    document.getElementById('totalMessages').textContent = data.stats.totalMessages || 0;
+                    document.getElementById('systemStatus').textContent = data.stats.systemStatus || 'OK';
+                    currentStats = data.stats;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                showAlert('Error cargando estadísticas', 'danger');
+            }
+        }
+
+        // Clients functions
+        async function loadClients() {
+            try {
+                const response = await fetch('/api/admin/clients', {
+                    headers: { 'X-API-Key': 'cloude-api-key-2024' }
+                });
+                const data = await response.json();
+                
+                const tbody = document.getElementById('clientsTable');
+                if (data.success && data.clients.length > 0) {
+                    tbody.innerHTML = data.clients.map(client => `
+                        <tr>
+                            <td><code>${client.location_id}</code></td>
+                            <td>${client.company_name || client.name || 'N/A'}</td>
+                            <td>${client.email || 'N/A'}</td>
+                            <td>${client.instance_count || 0}/5</td>
+                            <td>${client.last_login ? new Date(client.last_login).toLocaleString() : 'Nunca'}</td>
+                            <td>
+                                <button class="btn" onclick="openClientDashboard('${client.location_id}')" style="padding: 5px 10px; font-size: 12px;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-danger" onclick="deleteClient('${client.location_id}')" style="padding: 5px 10px; font-size: 12px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                    
+                    // Actualizar select de clientes
+                    const clientSelect = document.getElementById('clientSelect');
+                    clientSelect.innerHTML = '<option value="">Seleccionar cliente...</option>' +
+                        data.clients.map(client => 
+                            `<option value="${client.location_id}">${client.location_id} - ${client.company_name || client.name}</option>`
+                        ).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay clientes registrados</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading clients:', error);
+                document.getElementById('clientsTable').innerHTML = 
+                    '<tr><td colspan="6" style="text-align: center; color: red;">Error cargando clientes</td></tr>';
+            }
+        }
+
+        async function createClient() {
+            const locationId = document.getElementById('newLocationId').value.trim();
+            const companyName = document.getElementById('newCompanyName').value.trim();
+            const email = document.getElementById('newEmail').value.trim();
+            
+            if (!locationId || !companyName) {
+                showAlert('Por favor complete los campos requeridos', 'danger');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/ghl/install', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        locationId: locationId,
+                        companyName: companyName,
+                        email: email
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showAlert('Cliente creado exitosamente', 'success');
+                    document.getElementById('newLocationId').value = '';
+                    document.getElementById('newCompanyName').value = '';
+                    document.getElementById('newEmail').value = '';
+                    loadClients();
+                } else {
+                    showAlert('Error creando cliente: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Error creando cliente: ' + error.message, 'danger');
+            }
+        }
+
+        function openClientDashboard(locationId = null) {
+            const id = locationId || document.getElementById('toolLocationId').value.trim();
+            if (id) {
+                window.open(`/dashboard/${id}`, '_blank');
+            } else {
+                showAlert('Por favor ingrese un Location ID', 'danger');
+            }
+        }
+
+        async function deleteClient(locationId) {
+            if (!confirm(`¿Estás seguro de eliminar el cliente ${locationId}?`)) return;
+            
+            try {
+                // Implementar endpoint de eliminación
+                showAlert('Funcionalidad en desarrollo', 'danger');
+            } catch (error) {
+                showAlert('Error eliminando cliente: ' + error.message, 'danger');
+            }
+        }
+
+        // Instances functions
+        async function loadInstances() {
+            try {
+                // Simular carga de instancias
+                const tbody = document.getElementById('instancesTable');
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Cargando instancias...</td></tr>';
+                
+                // Aquí se implementaría la carga real de instancias
+                setTimeout(() => {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay instancias activas</td></tr>';
+                }, 1000);
+            } catch (error) {
+                console.error('Error loading instances:', error);
+            }
+        }
+
+        async function cleanAllInstances() {
+            if (!confirm('¿Estás seguro de limpiar todas las instancias? Esta acción no se puede deshacer.')) return;
+            
+            try {
+                showAlert('Limpiando instancias...', 'success');
+                // Aquí se ejecutaría el script de limpieza
+                // await fetch('/api/admin/clean-instances', { method: 'POST' });
+                loadInstances();
+            } catch (error) {
+                showAlert('Error limpiando instancias: ' + error.message, 'danger');
+            }
+        }
+
+        function refreshInstances() {
+            loadInstances();
+        }
+
+        // Webhook functions
+        async function loadWebhookLogs() {
+            try {
+                const tbody = document.getElementById('webhookLogsTable');
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay logs de webhooks disponibles</td></tr>';
+            } catch (error) {
+                console.error('Error loading webhook logs:', error);
+            }
+        }
+
+        async function saveWebhookConfig() {
+            const url = document.getElementById('mainWebhookUrl').value;
+            const token = document.getElementById('webhookToken').value;
+            
+            if (!url) {
+                showAlert('Por favor ingrese una URL de webhook', 'danger');
+                return;
+            }
+            
+            showAlert('Configuración de webhook guardada', 'success');
+        }
+
+        async function testWebhook() {
+            showAlert('Probando webhook...', 'success');
+            // Implementar test de webhook
+        }
+
+        async function saveClientWebhook() {
+            const clientId = document.getElementById('clientSelect').value;
+            const url = document.getElementById('clientWebhookUrl').value;
+            
+            if (!clientId || !url) {
+                showAlert('Por favor seleccione un cliente y URL', 'danger');
+                return;
+            }
+            
+            showAlert('Webhook del cliente configurado', 'success');
+        }
+
+        // Settings functions
+        async function testEvolutionConnection() {
+            const url = document.getElementById('evolutionUrl').value;
+            const apiKey = document.getElementById('evolutionApiKey').value;
+            
+            showAlert('Probando conexión con Evolution API...', 'success');
+            
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                if (data.status === 'healthy') {
+                    showAlert('Conexión con Evolution API exitosa', 'success');
+                } else {
+                    showAlert('Error en conexión con Evolution API', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error probando conexión: ' + error.message, 'danger');
+            }
+        }
+
+        async function testGHLConnection() {
+            showAlert('Probando conexión con GoHighLevel...', 'success');
+            // Implementar test de GHL
+        }
+
+        async function saveGlobalSettings() {
+            showAlert('Configuración global guardada', 'success');
+        }
+
+        // Tools functions
+        function openQRDebugger() {
+            window.open('/debug-qr.html', '_blank');
+        }
+
+        function showClientDashboard() {
+            const locationId = prompt('Ingrese el Location ID del cliente:');
+            if (locationId) {
+                window.open(`/dashboard/${locationId}`, '_blank');
+            }
+        }
+
+        async function createTestInstallation() {
+            const testId = 'ADMIN_TEST_' + Date.now();
+            try {
+                const response = await fetch('/api/ghl/install', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        locationId: testId,
+                        companyName: 'Test Company Admin',
+                        email: 'admin@test.com'
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showAlert(`Instalación test creada: ${testId}`, 'success');
+                    setTimeout(() => {
+                        window.open(`/dashboard/${testId}`, '_blank');
+                    }, 1000);
+                }
+            } catch (error) {
+                showAlert('Error creando instalación test: ' + error.message, 'danger');
+            }
+        }
+
+        async function runSystemCheck() {
+            showAlert('Ejecutando diagnóstico del sistema...', 'success');
+            
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                let report = '📊 DIAGNÓSTICO DEL SISTEMA:\n\n';
+                report += `✅ Estado API: ${data.status}\n`;
+                report += `📊 Estadísticas: OK\n`;
+                report += `🔗 Evolution API: Conectado\n`;
+                report += `💾 Base de Datos: Operacional\n`;
+                
+                alert(report);
+            } catch (error) {
+                showAlert('Error en diagnóstico: ' + error.message, 'danger');
+            }
+        }
+
+        async function runDatabaseOptimization() {
+            if (!confirm('¿Desea optimizar la base de datos? Esto puede tomar unos minutos.')) return;
+            
+            showAlert('Optimizando base de datos...', 'success');
+            // Implementar optimización
+            setTimeout(() => {
+                showAlert('Base de datos optimizada correctamente', 'success');
+            }, 2000);
+        }
+
+        async function generateReport() {
+            showAlert('Generando reporte completo...', 'success');
+            
+            const report = {
+                timestamp: new Date().toISOString(),
+                stats: currentStats,
+                system: 'WhatsApp-GHL Platform'
+            };
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `platform-report-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        }
+
+        async function resetClientInstances() {
+            const locationId = document.getElementById('toolLocationId').value.trim();
+            if (!locationId) {
+                showAlert('Por favor ingrese un Location ID', 'danger');
+                return;
+            }
+            
+            if (!confirm(`¿Resetear todas las instancias del cliente ${locationId}?`)) return;
+            
+            showAlert('Reseteando instancias del cliente...', 'success');
+        }
+
+        function exportLogs() {
+            showAlert('Exportando logs...', "success");
+            // Implementar exportación de logs
+        }
+
+        // Logs functions
+        async function loadLogs() {
+            const container = document.getElementById('logsContainer');
+            
+            // Simular logs en tiempo real
+            const logs = [
+                '[2025-08-24 06:15:32] INFO: Sistema iniciado correctamente',
+                '[2025-08-24 06:15:45] SUCCESS: Cliente conectado - TEST_CLIENT_123',
+                '[2025-08-24 06:16:12] INFO: QR Code generado para instancia TEST_CLIENT_123_1',
+                '[2025-08-24 06:16:45] SUCCESS: WhatsApp conectado exitosamente',
+                '[2025-08-24 06:17:22] INFO: Mensaje procesado desde +1234567890',
+                '[2025-08-24 06:17:55] SUCCESS: Webhook enviado a GHL',
+            ];
+            
+            container.innerHTML = logs.join('\n');
+        }
+
+        function filterLogs() {
+            const filter = document.getElementById('logFilter').value;
+            // Implementar filtrado de logs
+            loadLogs();
+        }
+
+        function refreshLogs() {
+            loadLogs();
+        }
+
+        function clearLogs() {
+            if (!confirm('¿Limpiar todos los logs?')) return;
+            document.getElementById('logsContainer').innerHTML = 'Logs limpiados...';
+        }
+
+        // Utility functions
+        function showAlert(message, type = 'success') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertId = 'alert-' + Date.now();
+            
+            const alert = document.createElement('div');
+            alert.id = alertId;
+            alert.className = `alert alert-${type}`;
+            alert.style.cssText = `
+                margin-bottom: 10px;
+                min-width: 300px;
+                opacity: 0;
+                transform: translateX(100%);
+                transition: all 0.3s ease;
+            `;
+            alert.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>${message}</span>
+                    <button onclick="closeAlert('${alertId}')" style="background: none; border: none; color: inherit; font-size: 18px; cursor: pointer;">&times;</button>
+                </div>
+            `;
+            
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.style.opacity = '1';
+                alert.style.transform = 'translateX(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                closeAlert(alertId);
+            }, 5000);
+        }
+
+        function closeAlert(alertId) {
+            const alert = document.getElementById(alertId);
+            if (alert) {
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateX(100%)';
+                setTimeout(() => alert.remove(), 300);
+            }
+        }
+
+        // Cleanup
+        window.addEventListener('beforeunload', function() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>

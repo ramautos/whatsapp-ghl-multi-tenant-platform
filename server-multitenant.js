@@ -109,6 +109,16 @@ app.get('/admin-old', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
+// Panel de administración completo - Centro de control total
+app.get('/admin-complete', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin-complete.html'));
+});
+
+// Centro de control principal - Navegación de administrador
+app.get('/control-center', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index-admin.html'));
+});
+
 // ================================
 // WEBSOCKETS PARA TIEMPO REAL
 // ================================

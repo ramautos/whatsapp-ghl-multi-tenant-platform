@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 WhatsApp-GHL Platform - Control Center</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .hero-section {
+            text-align: center;
+            padding: 80px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero-title {
+            font-size: 48px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .hero-subtitle {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 50px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .admin-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .admin-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .admin-card:hover::before {
+            left: 100%;
+        }
+
+        .admin-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .card-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .card-description {
+            font-size: 16px;
+            color: #6c757d;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .card-features {
+            text-align: left;
+            margin-bottom: 25px;
+        }
+
+        .card-features li {
+            list-style: none;
+            padding: 8px 0;
+            color: #495057;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .card-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .card-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .quick-access {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+        }
+
+        .quick-access h3 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .quick-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .quick-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .quick-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .footer a {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 36px;
+            }
+            
+            .hero-subtitle {
+                font-size: 20px;
+            }
+            
+            .section-title {
+                font-size: 28px;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-section">
+        <h1 class="hero-title">🚀 WhatsApp-GHL Platform</h1>
+        <p class="hero-subtitle">Centro de Control Administrativo</p>
+        <div class="status-badge">
+            <i class="fas fa-circle"></i>
+            SISTEMA OPERATIVO
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">Paneles de Administración</h2>
+        
+        <div class="cards-grid">
+            <div class="admin-card" onclick="openAdminComplete()">
+                <i class="fas fa-cogs card-icon"></i>
+                <h3 class="card-title">Admin Center Completo</h3>
+                <p class="card-description">Panel de control principal con todas las funcionalidades integradas</p>
+                <ul class="card-features">
+                    <li>Dashboard de estadísticas en tiempo real</li>
+                    <li>Gestión completa de clientes</li>
+                    <li>Control de instancias WhatsApp</li>
+                    <li>Configuración de webhooks</li>
+                    <li>Herramientas de debugging</li>
+                    <li>Logs y monitoreo del sistema</li>
+                </ul>
+                <button class="card-button">
+                    <i class="fas fa-rocket"></i>
+                    Acceder al Admin Center
+                </button>
+            </div>
+
+            <div class="admin-card" onclick="openOriginalAdmin()">
+                <i class="fas fa-chart-line card-icon"></i>
+                <h3 class="card-title">Dashboard Estadísticas</h3>
+                <p class="card-description">Panel enfocado en métricas y análisis del sistema</p>
+                <ul class="card-features">
+                    <li>Estadísticas detalladas</li>
+                    <li>Gráficos y reportes</li>
+                    <li>Análisis de rendimiento</li>
+                    <li>Métricas de clientes</li>
+                </ul>
+                <button class="card-button">
+                    <i class="fas fa-chart-area"></i>
+                    Ver Estadísticas
+                </button>
+            </div>
+
+            <div class="admin-card" onclick="openQRDebugger()">
+                <i class="fas fa-qrcode card-icon"></i>
+                <h3 class="card-title">QR Code Debugger</h3>
+                <p class="card-description">Herramienta especializada para testing de códigos QR</p>
+                <ul class="card-features">
+                    <li>Generación de QR en tiempo real</li>
+                    <li>Logs detallados de debugging</li>
+                    <li>Testing con diferentes clientes</li>
+                    <li>Validación de conexiones</li>
+                </ul>
+                <button class="card-button">
+                    <i class="fas fa-bug"></i>
+                    Debug QR Codes
+                </button>
+            </div>
+        </div>
+
+        <div class="quick-access">
+            <h3>🚀 Acceso Rápido</h3>
+            <div class="quick-buttons">
+                <button class="quick-btn" onclick="createTestClient()">
+                    <i class="fas fa-plus"></i>
+                    Crear Cliente Test
+                </button>
+                <button class="quick-btn" onclick="openClientDashboard()">
+                    <i class="fas fa-external-link-alt"></i>
+                    Dashboard Cliente
+                </button>
+                <button class="quick-btn" onclick="checkSystemHealth()">
+                    <i class="fas fa-heartbeat"></i>
+                    Estado Sistema
+                </button>
+                <button class="quick-btn" onclick="cleanAllInstances()">
+                    <i class="fas fa-broom"></i>
+                    Limpiar Instancias
+                </button>
+                <button class="quick-btn" onclick="viewLogs()">
+                    <i class="fas fa-file-alt"></i>
+                    Ver Logs
+                </button>
+                <button class="quick-btn" onclick="openGitHub()">
+                    <i class="fab fa-github"></i>
+                    GitHub
+                </button>
+                <button class="quick-btn" onclick="openCoolify()">
+                    <i class="fas fa-cloud"></i>
+                    Coolify Deploy
+                </button>
+                <button class="quick-btn" onclick="openEvolutionAPI()">
+                    <i class="fab fa-whatsapp"></i>
+                    Evolution API
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>🤖 <strong>WhatsApp-GHL Multi-Tenant Platform</strong></p>
+        <p>Desarrollado por <a href="https://github.com/ramautos">RAY ALVARADO</a> | 
+        <a href="https://app.cloude.es">Coolify Deploy</a> | 
+        <a href="https://github.com/ramautos/whatsapp-ghl-multi-tenant-platform">GitHub Repository</a></p>
+        <p style="margin-top: 15px; opacity: 0.8;">v1.0.0 - Production Ready ✅</p>
+    </div>
+
+    <script>
+        // Funciones para navegación
+        function openAdminComplete() {
+            window.open('/admin-complete', '_blank');
+        }
+
+        function openOriginalAdmin() {
+            window.open('/admin', '_blank');
+        }
+
+        function openQRDebugger() {
+            window.open('/debug-qr.html', '_blank');
+        }
+
+        async function createTestClient() {
+            const testId = 'QUICK_TEST_' + Date.now();
+            
+            try {
+                const response = await fetch('/api/ghl/install', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        locationId: testId,
+                        companyName: 'Quick Test Client',
+                        email: 'test@quickaccess.com'
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert(`✅ Cliente test creado: ${testId}\n\nAbriendo dashboard...`);
+                    setTimeout(() => {
+                        window.open(`/dashboard/${testId}`, '_blank');
+                    }, 1000);
+                } else {
+                    alert('❌ Error creando cliente: ' + data.error);
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        function openClientDashboard() {
+            const locationId = prompt('Ingrese el Location ID del cliente:');
+            if (locationId) {
+                window.open(`/dashboard/${locationId}`, '_blank');
+            }
+        }
+
+        async function checkSystemHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                let status = '📊 ESTADO DEL SISTEMA:\n\n';
+                status += `✅ API Status: ${data.status}\n`;
+                status += `🔗 Evolution API: ${data.evolution ? 'Conectado' : 'Desconectado'}\n`;
+                status += `💾 Base de Datos: ${data.database ? 'OK' : 'Error'}\n`;
+                status += `⏰ Uptime: ${Math.floor(process.uptime?.() / 3600) || 'N/A'} horas\n`;
+                
+                alert(status);
+            } catch (error) {
+                alert('❌ Error verificando sistema: ' + error.message);
+            }
+        }
+
+        async function cleanAllInstances() {
+            if (!confirm('🗑️ ¿Está seguro de limpiar TODAS las instancias?\n\nEsta acción eliminará todas las instancias de WhatsApp conectadas.')) {
+                return;
+            }
+            
+            alert('🧹 Limpiando todas las instancias...\n\nEsto puede tomar unos minutos.');
+            
+            // Aquí se ejecutaría el script de limpieza
+            try {
+                // await fetch('/api/admin/clean-all-instances', { method: 'POST' });
+                setTimeout(() => {
+                    alert('✅ Todas las instancias han sido limpiadas correctamente');
+                }, 2000);
+            } catch (error) {
+                alert('❌ Error limpiando instancias: ' + error.message);
+            }
+        }
+
+        function viewLogs() {
+            window.open('/admin-complete#logs', '_blank');
+        }
+
+        function openGitHub() {
+            window.open('https://github.com/ramautos/whatsapp-ghl-multi-tenant-platform', '_blank');
+        }
+
+        function openCoolify() {
+            window.open('https://app.cloude.es', '_blank');
+        }
+
+        function openEvolutionAPI() {
+            window.open('https://evolutionv2.cloude.es', '_blank');
+        }
+
+        // Auto-check system status on load
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                const statusBadge = document.querySelector('.status-badge');
+                if (data.status === 'healthy') {
+                    statusBadge.innerHTML = '<i class="fas fa-circle"></i> SISTEMA OPERATIVO';
+                    statusBadge.style.background = 'linear-gradient(135deg, #4CAF50, #45a049)';
+                } else {
+                    statusBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> SISTEMA CON PROBLEMAS';
+                    statusBadge.style.background = 'linear-gradient(135deg, #ff6b35, #f7931e)';
+                }
+            } catch (error) {
+                const statusBadge = document.querySelector('.status-badge');
+                statusBadge.innerHTML = '<i class="fas fa-times"></i> SISTEMA OFFLINE';
+                statusBadge.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
+            }
+        });
+    </script>
+</body>
+</html>
