@@ -6,6 +6,68 @@ const evolutionService = require('../services/evolutionService');
 const db = require('../config/database-sqlite');
 
 // ================================
+// ADMIN LOGIN
+// ================================
+router.post('/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        
+        // Verificar credenciales simples (en producción usar hash)
+        const adminUsername = process.env.ADMIN_USERNAME || 'admin';
+        const adminPassword = process.env.ADMIN_PASSWORD || 'CloudeWA2024!';
+        
+        if (username === adminUsername && password === adminPassword) {
+            // Generar token simple (en producción usar JWT)
+            const token = Buffer.from(`${username}:${Date.now()}`).toString('base64');
+            
+            res.json({
+                success: true,
+                message: 'Login exitoso',
+                token: token,
+                user: { username: username, role: 'admin' }
+            });
+        } else {
+            res.status(401).json({
+                success: false,
+                error: 'Credenciales incorrectas'
+            });
+        }
+    } catch (error) {
+        console.error('❌ Error en login admin:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error interno del servidor'
+        });
+    }
+});
+
+// Middleware de autenticación para rutas admin
+function requireAdminAuth(req, res, next) {
+    const token = req.headers['authorization']?.replace('Bearer ', '') || req.headers['x-admin-token'];
+    
+    if (!token) {
+        return res.status(401).json({ success: false, error: 'Token requerido' });
+    }
+    
+    // Validación simple del token (en producción usar JWT)
+    try {
+        const decoded = Buffer.from(token, 'base64').toString();
+        const [username, timestamp] = decoded.split(':');
+        
+        // Token válido por 24 horas
+        const tokenAge = Date.now() - parseInt(timestamp);
+        if (tokenAge > 24 * 60 * 60 * 1000) {
+            return res.status(401).json({ success: false, error: 'Token expirado' });
+        }
+        
+        req.adminUser = { username };
+        next();
+    } catch (error) {
+        return res.status(401).json({ success: false, error: 'Token inválido' });
+    }
+}
+
+// ================================
 // ESTADÍSTICAS GENERALES
 // ================================
 

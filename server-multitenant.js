@@ -112,6 +112,11 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
 });
 
+// Admin login page
+app.get('/admin-login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
+});
+
 // Admin Super Control (NUEVO)
 app.get('/admin-super', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin-super.html'));
