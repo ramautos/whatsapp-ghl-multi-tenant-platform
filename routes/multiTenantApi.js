@@ -17,9 +17,18 @@ const authenticateApiKey = (req, res, next) => {
     
     // Skip authentication for health checks and public endpoints
     const publicEndpoints = ['/health', '/system/status'];
-    const isPublicEndpoint = publicEndpoints.some(endpoint => req.path === endpoint);
+    // Also allow frontend dashboard API calls (for user interface)
+    const frontendPatterns = [
+        /^\/instances\/[^\/]+$/, // GET /instances/:locationId
+        /^\/instances\/[^\/]+\/\d+\/connect$/, // POST /instances/:locationId/:position/connect
+        /^\/instances\/[^\/]+\/activate$/, // POST /instances/:locationId/activate
+        /^\/statistics\/[^\/]+\/today$/ // GET /statistics/:locationId/today
+    ];
     
-    if (isPublicEndpoint) {
+    const isPublicEndpoint = publicEndpoints.some(endpoint => req.path === endpoint);
+    const isFrontendCall = frontendPatterns.some(pattern => pattern.test(req.path));
+    
+    if (isPublicEndpoint || isFrontendCall) {
         return next();
     }
     
