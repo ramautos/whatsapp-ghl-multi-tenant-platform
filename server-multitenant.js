@@ -20,6 +20,7 @@ const adminApi = require('./routes/adminApi');
 const ghlApi = require('./routes/ghlApi');
 const instancesApi = require('./routes/instancesApi');
 const webhookApi = require('./routes/webhookApi');
+const emergencyApi = require('./routes/emergencyApi');
 
 const app = express();
 const server = http.createServer(app);
@@ -67,6 +68,7 @@ app.use('/api/instances', instancesApi);
 app.use('/webhook', webhookHandler);
 app.use('/webhook', webhookApi);
 app.use('/export', exportRoutes);
+app.use('/emergency', emergencyApi);
 
 // ================================
 // RUTAS DE PÁGINAS
