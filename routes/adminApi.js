@@ -14,7 +14,7 @@ router.post('/login', async (req, res) => {
         
         // Verificar credenciales simples (en producción usar hash)
         const adminUsername = process.env.ADMIN_USERNAME || 'admin';
-        const adminPassword = process.env.ADMIN_PASSWORD || 'CloudeWA2024!';
+        const adminPassword = process.env.ADMIN_PASSWORD || 'admin2024';
         
         if (username === adminUsername && password === adminPassword) {
             // Generar token simple (en producción usar JWT)
